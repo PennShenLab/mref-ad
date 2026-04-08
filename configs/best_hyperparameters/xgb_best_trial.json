@@ -1,0 +1,45 @@
+{
+  "xgb_concat_all": {
+    "best_params": {
+      "n_estimators": 156,
+      "max_depth": 9,
+      "learning_rate": 0.006476353611236857,
+      "subsample": 0.6177242083155057,
+      "colsample_bytree": 0.5607060403234995
+    },
+    "best_val_auc": 0.7935065506310073,
+    "best_val_metric_name": "val_f1",
+    "best_val_metric": 0.6647564832384568,
+    "best_val_loss": NaN,
+    "best_val_acc": 0.673202614379085,
+    "best_val_bacc": 0.6629241129241129,
+    "best_val_f1": 0.6647564832384568,
+    "test_metrics": {
+      "auc": 0.789112153955125,
+      "acc": 0.6168831168831169,
+      "f1": 0.5877338466430063
+    },
+    "second_best_params": {
+      "n_estimators": 163,
+      "max_depth": 7,
+      "learning_rate": 0.014541108885023918,
+      "subsample": 0.6688218888235957,
+      "colsample_bytree": 0.5141008355992611
+    },
+    "second_best_val_auc": 0.790443025244925,
+    "second_best_val_metric_name": "val_f1",
+    "second_best_val_metric": 0.6636445315690599,
+    "second_best_val_loss": NaN,
+    "second_best_val_acc": 0.6797385620915033,
+    "second_best_val_bacc": 0.6675537425537424,
+    "second_best_val_f1": 0.6636445315690599,
+    "second_best_test_metrics": {
+      "auc": 0.7789153993835404,
+      "acc": 0.6103896103896104,
+      "f1": 0.5869703686718132
+    },
+    "model_path": "results/models/xgb_all/xgb_concat_all/final/model.joblib",
+    "meta_path": "results/models/xgb_all/xgb_concat_all/final/model.meta.pkl",
+    "n_trials": 100
+  }
+}

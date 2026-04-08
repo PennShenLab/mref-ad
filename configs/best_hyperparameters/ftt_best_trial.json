@@ -1,0 +1,43 @@
+{
+  "ftt_concat_all": {
+    "best_params": {
+      "lr": 1.6538667148893164e-05,
+      "weight_decay": 2.8796885092066623e-06,
+      "epochs": 14
+    },
+    "best_val_auc": 0.7866950134072995,
+    "best_val_metric_name": "val_f1",
+    "best_val_metric": 0.6270656061166605,
+    "best_val_loss": 0.7901930302576302,
+    "best_val_acc": 0.6339869281045751,
+    "best_val_bacc": 0.627991452991453,
+    "best_val_f1": 0.6270656061166605,
+    "test_metrics": {
+      "auc": 0.8012210044069011,
+      "acc": 0.6103896103896104,
+      "f1": 0.6133568931007773
+    },
+    "second_best_params": {
+      "lr": 0.0002457691382734895,
+      "weight_decay": 2.620435989635998e-06,
+      "epochs": 13
+    },
+    "second_best_val_auc": 0.7761263100623458,
+    "second_best_val_metric_name": "val_f1",
+    "second_best_val_metric": 0.6204681954681955,
+    "second_best_val_loss": 0.8129648881800035,
+    "second_best_val_acc": 0.6078431372549019,
+    "second_best_val_bacc": 0.6084369334369334,
+    "second_best_val_f1": 0.6204681954681955,
+    "second_best_test_metrics": {
+      "auc": 0.7750423281613802,
+      "acc": 0.6038961038961039,
+      "f1": 0.5921296296296297
+    },
+    "model_path": "results/models/ftt_all/ftt_concat_all/final/model.ftt.state.pkl",
+    "meta_path": "results/models/ftt_all/ftt_concat_all/final/model.meta.pkl",
+    "best_epoch": 14,
+    "second_best_epoch": 13,
+    "n_trials": 200
+  }
+}

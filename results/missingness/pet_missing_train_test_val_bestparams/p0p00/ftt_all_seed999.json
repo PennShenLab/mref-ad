@@ -1,0 +1,23 @@
+{
+  "ftt_concat_all": {
+    "best_params": {
+      "lr": 1.6538667148893164e-05,
+      "weight_decay": 2.8796885092066623e-06,
+      "epochs": 14
+    },
+    "best_val_auc": NaN,
+    "best_val_metric_name": "train_fixed",
+    "best_val_metric": NaN,
+    "best_val_loss": NaN,
+    "best_val_acc": NaN,
+    "best_val_bacc": NaN,
+    "best_val_f1": NaN,
+    "test_metrics": {
+      "auc": 0.7431934605001681,
+      "acc": 0.5882352941176471,
+      "f1": 0.5669973232561801
+    },
+    "n_trials": 0,
+    "train_fixed_params": true
+  }
+}

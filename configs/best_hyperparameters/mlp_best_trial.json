@@ -1,0 +1,48 @@
+{
+  "mlp_concat_all": {
+    "best_params": {
+      "hidden": 507,
+      "lr": 0.0028851535963527147,
+      "wd": 0.00010500601125283576,
+      "drop": 0.005731164773936379,
+      "batch": 128,
+      "epochs": 3
+    },
+    "best_val_auc": 0.791736653521986,
+    "best_val_metric_name": "val_f1",
+    "best_val_metric": 0.6657370407370408,
+    "best_val_loss": 0.8278004266078176,
+    "best_val_acc": 0.673202614379085,
+    "best_val_bacc": 0.6633190883190884,
+    "best_val_f1": 0.6657370407370408,
+    "test_metrics": {
+      "auc": 0.805828021691794,
+      "acc": 0.6623376623376623,
+      "f1": 0.617158886577395
+    },
+    "second_best_params": {
+      "hidden": 467,
+      "lr": 0.0038777342248728494,
+      "wd": 4.285403397181604e-05,
+      "drop": 0.15686570811967798,
+      "batch": 128,
+      "epochs": 5
+    },
+    "second_best_epoch": 5,
+    "second_best_val_auc": 0.7766677382850361,
+    "second_best_val_metric_name": "val_f1",
+    "second_best_val_metric": 0.6567181246426529,
+    "second_best_val_loss": 0.8228735491341236,
+    "second_best_val_acc": 0.5686274509803921,
+    "second_best_val_bacc": 0.588060088060088,
+    "second_best_val_f1": 0.5535775699710125,
+    "second_best_test_metrics": {
+      "auc": 0.800797043483756,
+      "acc": 0.6038961038961039,
+      "f1": 0.6126071130241272
+    },
+    "model_path": "results/models/mlp_concat/mlp_concat_all/final/model.mlp.state.pt",
+    "meta_path": "results/models/mlp_concat/mlp_concat_all/final/model.meta.pkl",
+    "n_trials": 200
+  }
+}

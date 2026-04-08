@@ -1,0 +1,24 @@
+{
+  "lr_concat_all": {
+    "best_params": {
+      "C": 0.001629944649074359
+    },
+    "second_best_params": null,
+    "best_val_auc": NaN,
+    "best_val_metric_name": null,
+    "best_val_metric": NaN,
+    "best_val_loss": NaN,
+    "best_val_acc": NaN,
+    "best_val_bacc": NaN,
+    "best_val_f1": NaN,
+    "test_metrics": {
+      "auc": 0.7007324907977117,
+      "acc": 0.1895424836601307,
+      "f1": 0.10622710622710622
+    },
+    "model_path": "results/models/lr_all/lr_concat_all/final/model.joblib",
+    "meta_path": "results/models/lr_all/lr_concat_all/final/model.meta.pkl",
+    "n_trials": 0,
+    "retrain_only": true
+  }
+}

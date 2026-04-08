@@ -1,0 +1,37 @@
+{
+  "lr_concat_all": {
+    "best_params": {
+      "C": 0.001629944649074359
+    },
+    "best_val_auc": 0.7809528195150132,
+    "best_val_metric_name": "val_f1",
+    "best_val_metric": 0.6395872247203966,
+    "best_val_loss": NaN,
+    "best_val_acc": 0.6535947712418301,
+    "best_val_bacc": 0.6572261072261072,
+    "best_val_f1": 0.6395872247203966,
+    "test_metrics": {
+      "auc": 0.7979376382519227,
+      "acc": 0.6168831168831169,
+      "f1": 0.5970133900252027
+    },
+    "second_best_params": {
+      "C": 0.0016641190670880965
+    },
+    "second_best_val_auc": 0.7807101348367023,
+    "second_best_val_metric_name": "val_f1",
+    "second_best_val_metric": 0.6395872247203966,
+    "second_best_val_loss": NaN,
+    "second_best_val_acc": 0.6535947712418301,
+    "second_best_val_bacc": 0.6572261072261072,
+    "second_best_val_f1": 0.6395872247203966,
+    "second_best_test_metrics": {
+      "auc": 0.7986594477122892,
+      "acc": 0.6168831168831169,
+      "f1": 0.5970133900252027
+    },
+    "model_path": "results/models/lr_all/lr_concat_all/final/model.joblib",
+    "meta_path": "results/models/lr_all/lr_concat_all/final/model.meta.pkl",
+    "n_trials": 100
+  }
+}

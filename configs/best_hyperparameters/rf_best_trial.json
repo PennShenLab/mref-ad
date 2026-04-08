@@ -1,0 +1,41 @@
+{
+  "rf_concat_all": {
+    "best_params": {
+      "n_estimators": 307,
+      "max_depth": 37,
+      "min_samples_split": 10
+    },
+    "best_val_auc": 0.7826467099599625,
+    "best_val_metric_name": "val_f1",
+    "best_val_metric": 0.6479582273396706,
+    "best_val_loss": NaN,
+    "best_val_acc": 0.6666666666666666,
+    "best_val_bacc": 0.6568635068635068,
+    "best_val_f1": 0.6479582273396706,
+    "test_metrics": {
+      "auc": 0.7856659912424436,
+      "acc": 0.6038961038961039,
+      "f1": 0.5893184164086173
+    },
+    "second_best_params": {
+      "n_estimators": 347,
+      "max_depth": 30,
+      "min_samples_split": 9
+    },
+    "second_best_val_auc": 0.7751474041107976,
+    "second_best_val_metric_name": "val_f1",
+    "second_best_val_metric": 0.6479582273396706,
+    "second_best_val_loss": NaN,
+    "second_best_val_acc": 0.6666666666666666,
+    "second_best_val_bacc": 0.6568635068635068,
+    "second_best_val_f1": 0.6479582273396706,
+    "second_best_test_metrics": {
+      "auc": 0.7855221199789767,
+      "acc": 0.6168831168831169,
+      "f1": 0.5980273752012882
+    },
+    "model_path": "results/models/rf_all/rf_concat_all/final/model.joblib",
+    "meta_path": "results/models/rf_all/rf_concat_all/final/model.meta.pkl",
+    "n_trials": 100
+  }
+}

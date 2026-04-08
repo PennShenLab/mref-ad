@@ -1,0 +1,26 @@
+{
+  "mlp_concat_all": {
+    "best_params": {
+      "hidden": 507,
+      "lr": 0.0028851535963527147,
+      "wd": 0.00010500601125283576,
+      "drop": 0.005731164773936379,
+      "batch": 128,
+      "epochs": 3
+    },
+    "best_val_auc": NaN,
+    "best_val_metric_name": "train_fixed",
+    "best_val_metric": NaN,
+    "best_val_loss": NaN,
+    "best_val_acc": NaN,
+    "best_val_bacc": NaN,
+    "best_val_f1": NaN,
+    "test_metrics": {
+      "auc": 0.7787877955910254,
+      "acc": 0.5751633986928104,
+      "f1": 0.558237180546831
+    },
+    "n_trials": 0,
+    "train_fixed_params": true
+  }
+}

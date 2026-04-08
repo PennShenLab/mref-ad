@@ -1,0 +1,21 @@
+{
+  "study_name": "optuna_flex_moe_seed7_200",
+  "best_trial_number": 172,
+  "best_value": 0.6607168458781362,
+  "best_params": {
+    "train_epochs": 23,
+    "warm_up_epochs": 10,
+    "batch_size": 8,
+    "lr": 0.00024064903858704082,
+    "hidden_dim": 128,
+    "top_k": 2,
+    "num_patches": 8,
+    "num_experts": 12,
+    "num_layers_fus": 3,
+    "num_layers_pred": 3,
+    "num_heads": 2,
+    "dropout": 0.2109021899003642,
+    "gate_loss_weight": 0.006914574693658953
+  },
+  "n_trials": 200
+}
