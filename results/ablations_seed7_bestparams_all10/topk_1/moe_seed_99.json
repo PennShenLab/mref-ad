@@ -1,0 +1,8 @@
+{
+  "test_auc": 0.7696597902073044,
+  "test_acc": 0.6405228758169934,
+  "test_bacc": 0.6639278974585202,
+  "test_f1": 0.6186652410228994,
+  "_test_metrics_source": "retrain_run",
+  "confusion_report_test": null
+}
