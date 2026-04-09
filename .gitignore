@@ -1,0 +1,50 @@
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Experiment outputs (large / local)
+results/
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.log
+wandb/
+mlruns/
+
+# Optuna / local DBs
+*.db
+*.sqlite3
+
+# Data (not for public git; keep local paths in configs)
+data/
+
+# Coverage / pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy / Ruff
+.mypy_cache/
+.ruff_cache/

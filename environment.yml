@@ -1,0 +1,15 @@
+# Conda env that mirrors the pip-pinned stack in requirements.txt.
+# Create from repo root (so requirements.txt resolves):
+#   conda env create -f environment.yml
+#   conda activate mref-ad
+#
+# Python patch version should match what you used for smoke tests when possible.
+
+name: mref-ad
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - -r requirements.txt
