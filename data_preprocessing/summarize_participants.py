@@ -1,20 +1,42 @@
 #!/usr/bin/env python3
 """
-Summarize participant characteristics (Table 1) for the IEEE ISBI paper.
+Summarize participant characteristics (Table 1) for the IEEE ICHI paper.
 
 This script merges demographic and imaging data to compute:
 - Number of participants per diagnosis (CN, MCI, AD)
 - Age at visit (mean ± SD)
 - Education (mean ± SD)
 - Sex distribution (% female/male)
+
+Usage (from repository root)::
+
+    python data_preprocessing/summarize_participants.py
+
+Defaults read ``data/PTDEMOG_30Sep2025.csv`` and
+``data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv``. Override paths with::
+
+    export MREF_DEMO_CSV=/path/to/demographics.csv
+    export MREF_IMG_CSV=/path/to/imaging_table.csv
+    python data_preprocessing/summarize_participants.py
+
+Writes under ``results/``: ``table1_participants_all_visits.csv`` / ``.tex`` and
+``table1_participants_last_visit.csv`` / ``.tex`` (directory is created if missing).
 """
 
-import pandas as pd
-import numpy as np
+import os
 
-# ==== Load datasets ====
-demo = pd.read_csv("data/251020_DX_DEMOGRAPHIC_multi_visit.csv")
-img = pd.read_csv("data/250826_DX_AMYLOID_multi_visit.csv")
+import numpy as np
+import pandas as pd
+
+# ==== Load datasets (override with env or edit defaults for your tree) ====
+_DEMO = os.environ.get("MREF_DEMO_CSV", "data/PTDEMOG_30Sep2025.csv")
+_IMG = os.environ.get(
+    "MREF_IMG_CSV",
+    "data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv",
+)
+os.makedirs("results", exist_ok=True)
+demo = pd.read_csv(_DEMO)
+img = pd.read_csv(_IMG)
 
 # Normalize columns
 for df in [demo, img]:
@@ -22,7 +44,8 @@ for df in [demo, img]:
     df["PTID"] = df["PTID"].astype(str).str.strip()
 
 # Merge by participant
-merged = pd.merge(img, demo, on="PTID", how="left")
+# Avoid duplicate VISCODE / VISDATE columns from demographics (suffixes → imaging keeps plain names).
+merged = pd.merge(img, demo, on="PTID", how="left", suffixes=("", "_DEMOG"))
 
 # Map diagnosis codes to text
 label_map = {1: "CN", 2: "MCI", 3: "AD", "1": "CN", "2": "MCI", "3": "AD"}
@@ -98,7 +121,8 @@ print(f"Diagnostic progression: {n_progressed}/{total_subjects} participants ({p
 
 # --- Detailed breakdown of progression patterns ---
 def progression_type(seq):
-    seq = pd.unique([x for x in seq if pd.notna(x)])  # remove duplicates and NaN
+    # Order-preserving unique (avoid pd.unique on plain list; pandas 3+ is strict)
+    seq = list(dict.fromkeys(x for x in seq if pd.notna(x)))
     if "CN" in seq and "MCI" in seq and "AD" in seq:
         return "CN→MCI→AD"
     elif "CN" in seq and "MCI" in seq and "AD" not in seq:

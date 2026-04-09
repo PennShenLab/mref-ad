@@ -1,3 +1,19 @@
+"""Explore ADNI diagnosis summaries (DXSUM-style table).
+
+Loads a longitudinal diagnosis extract and prints:
+  - column names (sanity check),
+  - value counts for ``DIAGNOSIS`` and ``DXAD``,
+  - a crosstab of ``DIAGNOSIS`` × ``DXAD``,
+  - ``DXAD`` distribution restricted to dementia rows (``DIAGNOSIS == 3``).
+
+The default CSV path is relative to the **repository root** (run this script after
+``cd`` to the repo, or adjust the path below).
+
+Example::
+
+    python data_preprocessing/explore_diagnosis.py
+"""
+
 import pandas as pd
 
 # Load the diagnosis file

@@ -8,10 +8,25 @@ Freesurfer–dataset column mapping produced by map_freesurfer_brain_regions_to_
 It creates one expert group per anatomical region for both amyloid PET (SUVR) and MRI (VOLUME)
 modalities, matching the style of the manually written experts.yaml.
 
-Usage:
-    python analysis/generate_freesurfer_experts_yaml.py \
+Working example (from repository root):
+
+1. Build the region→column mapping (requires ``data/freesurfer_brain_regions.csv`` and an
+   imaging table whose columns will be matched, e.g. last-visit amyloid/MRI SUVR+VOLUME)::
+
+    python data_preprocessing/map_freesurfer_brain_regions_to_data.py \
+        --regions data/freesurfer_brain_regions.csv \
+        --data data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv \
+        --output data/freesurfer_to_column_mapping.csv
+
+2. Generate regex-based expert groups YAML (expects mapping columns ``Region`` and ``Columns``)::
+
+    python data_preprocessing/generate_freesurfer_experts_yaml.py \
         --mapping data/freesurfer_to_column_mapping.csv \
         --output configs/freesurfer_experts.yaml
+
+Adjust ``--data`` and ``--output`` paths if your cohort files differ. The paper-style
+pipeline may instead use hand-written ``configs/freesurfer_lastvisit_experts_files.yaml``
+(per-expert CSV paths); this script produces an alternate ``groups``/regex layout.
 """
 
 import argparse

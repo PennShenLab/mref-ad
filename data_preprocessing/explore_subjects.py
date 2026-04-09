@@ -6,9 +6,10 @@ This script computes descriptive statistics for modality-specific datasets (e.g.
 and identifies their intersection to determine the triply aligned subset (Amyloid + Tau + MRI). 
 It outputs counts of unique participants, total imaging visits, and baseline-only samples per diagnosis.
 
-Typical usage:
+Typical usage (from repository root):
 --------------
-python analysis/explore_subjects.py 
+python data_preprocessing/explore_subjects.py
+# Optional:  --amy path/to/amy.csv  --tau path/to/tau.csv
 
 Outputs:
 --------
@@ -137,39 +138,65 @@ def summarize_diagnosis(file_path, label="Dataset"):
     }
     return summary
 
-# ---- Run summaries for each dataset ----
-amy = summarize_diagnosis("data/250826_DX_AMYLOID_multi_visit.csv", label="Amyloid-MRI")
-tau = summarize_diagnosis("data/250826_DX_TAU_multi_visit.csv", label="Tau-MRI")
+def main():
+    import argparse
+    import os
 
-# ---- Check overlap between the two ----
-amy = pd.read_csv("data/250826_DX_AMYLOID_multi_visit.csv")
-tau = pd.read_csv("data/250826_DX_TAU_multi_visit.csv")
+    parser = argparse.ArgumentParser(
+        description="Summarize amyloid and tau tables and their visit overlap (requires DIAGNOSIS, PTID, VISCODE)."
+    )
+    parser.add_argument(
+        "--amy",
+        default=os.environ.get(
+            "MREF_AMY_CSV",
+            "data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv",
+        ),
+        help="Amyloid table (e.g. multimodal or last-visit extract)",
+    )
+    parser.add_argument(
+        "--tau",
+        default=os.environ.get(
+            "MREF_TAU_CSV",
+            "data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv",
+        ),
+        help="Tau table; for a quick smoke run you may point to the same CSV if no tau extract exists.",
+    )
+    args = parser.parse_args()
 
-# Normalize columns
-amy.columns = amy.columns.str.upper()
-tau.columns = tau.columns.str.upper()
+    summarize_diagnosis(args.amy, label="Amyloid-MRI")
+    summarize_diagnosis(args.tau, label="Tau-MRI")
 
-# Clean PTID and VISCODE
-amy['PTID'] = amy['PTID'].str.strip()
-tau['PTID'] = tau['PTID'].str.strip()
+    amy = pd.read_csv(args.amy)
+    tau = pd.read_csv(args.tau)
 
-print(amy.columns)
-assert 'PTID' in amy.columns and 'PTID' in tau.columns, "PTID column missing in one of the datasets"
-assert 'VISCODE' in amy.columns and 'VISCODE' in tau.columns, "VISCODE column missing in one of the datasets"
-assert 'DIAGNOSIS' in amy.columns and 'DIAGNOSIS' in tau.columns, "DIAGNOSIS column missing in one of the datasets"
+    # Normalize columns
+    amy.columns = amy.columns.str.upper()
+    tau.columns = tau.columns.str.upper()
 
-# Merge by both PTID and VISCODE (visit code)
-merged = pd.merge(
-    amy[['PTID', 'VISCODE', 'DIAGNOSIS']],
-    tau[['PTID', 'VISCODE', 'DIAGNOSIS']],
-    on=['PTID', 'VISCODE'],
-    suffixes=('_AMY', '_TAU')
-)
+    # Clean PTID and VISCODE
+    amy["PTID"] = amy["PTID"].str.strip()
+    tau["PTID"] = tau["PTID"].str.strip()
 
-print(f"Total Amyloid visits: {len(amy)}")
-print(f"Total Tau visits: {len(tau)}")
-print(f"Overlapping visits (same subject + visit): {len(merged)}")
+    print(amy.columns)
+    assert "PTID" in amy.columns and "PTID" in tau.columns, "PTID column missing in one of the datasets"
+    assert "VISCODE" in amy.columns and "VISCODE" in tau.columns, "VISCODE column missing in one of the datasets"
+    assert "DIAGNOSIS" in amy.columns and "DIAGNOSIS" in tau.columns, "DIAGNOSIS column missing in one of the datasets"
 
-# If you want unique subjects among those overlapping visits
-unique_overlap_subjects = merged['PTID'].nunique()
-print(f"Unique subjects with overlapping visits: {unique_overlap_subjects}")
+    # Merge by both PTID and VISCODE (visit code)
+    merged = pd.merge(
+        amy[["PTID", "VISCODE", "DIAGNOSIS"]],
+        tau[["PTID", "VISCODE", "DIAGNOSIS"]],
+        on=["PTID", "VISCODE"],
+        suffixes=("_AMY", "_TAU"),
+    )
+
+    print(f"Total Amyloid visits: {len(amy)}")
+    print(f"Total Tau visits: {len(tau)}")
+    print(f"Overlapping visits (same subject + visit): {len(merged)}")
+
+    unique_overlap_subjects = merged["PTID"].nunique()
+    print(f"Unique subjects with overlapping visits: {unique_overlap_subjects}")
+
+
+if __name__ == "__main__":
+    main()

@@ -2,10 +2,10 @@
 """
 Explore ADNI demographic expert file and its overlap with imaging data.
 
-Usage:
-    python analysis/explore_demographics.py \
-        --demo data/251020_DX_DEMOGRAPHIC_multi_visit.csv \
-        --imaging data/250826_DX_AMYLOID_amy_ctx_multi_visit.csv
+Usage (from repository root):
+    python data_preprocessing/explore_demographics.py \
+        --demo data/freesurfer_lastvisit/251020_DX_DEMOGRAPHIC_last_visit.csv \
+        --imaging data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv
 """
 
 import pandas as pd

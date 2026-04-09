@@ -7,12 +7,10 @@ to column names in multimodal imaging datasets (e.g., Amyloid SUVR, MRI Volume).
 It produces a mapping CSV file that shows which dataset columns correspond to
 each Freesurfer region, which can then be used to define experts.yaml.
 
-Example usage:
-    $ conda activate ad-moe
-    $ cd analysis
-    $ python analysis/map_freesurfer_brain_regions_to_data.py \
+Example usage (from repository root):
+    $ python data_preprocessing/map_freesurfer_brain_regions_to_data.py \
         --regions data/freesurfer_brain_regions.csv \
-        --data data/250826_DX_AMYLOID_multi_visit.csv \
+        --data data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv \
         --output data/freesurfer_to_column_mapping.csv
 """
 

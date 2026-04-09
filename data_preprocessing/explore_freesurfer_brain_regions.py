@@ -19,10 +19,8 @@ Main steps performed:
 Outputs:
 - **data/freesurfer_brain_regions.csv** — cleaned and merged Freesurfer measures.
 
-Example:
-    $ conda activate ad-moe
-    $ cd analysis
-    $ python explore_freesurfer_brain_regions.py
+Example (from repository root):
+    $ python data_preprocessing/explore_freesurfer_brain_regions.py
 
 Example output:
     Raw sheet shape: (81, 5)
@@ -35,14 +33,26 @@ Example output:
 
 """
 
+import os
+import sys
+
 import pandas as pd
 import re
 
 # --------------------------
 # 1. Load the full Freesurfer sheet
 # --------------------------
-fs_path = "data/FS-VBM-keys_SLRedit.xlsx"
+fs_path = os.environ.get("MREF_FS_VBM_XLSX", "data/FS-VBM-keys_SLRedit.xlsx")
 sheet_name = "Freesurfer_sorted"
+
+if not os.path.isfile(fs_path):
+    print(
+        f"[ERROR] Missing FreeSurfer VBM keys spreadsheet: {fs_path}\n"
+        "Set MREF_FS_VBM_XLSX or add FS-VBM-keys_SLRedit.xlsx under data/. "
+        "If you already have data/freesurfer_brain_regions.csv, you can skip this script.",
+        file=sys.stderr,
+    )
+    sys.exit(2)
 
 raw = pd.read_excel(fs_path, sheet_name=sheet_name, header=None)
 print("Raw sheet shape:", raw.shape)
