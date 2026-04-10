@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 # =============================================================================
-# mref-ad ablations: Optuna best hyperparameters (from PARAMS_JSON), multiple split seeds
+# mref-ad ablations using fixed best hyperparameters running for 10 data splits
 # =============================================================================
-# Same recipe as the multi-seed evaluation driver under analysis/evaluation/
-# (PARAMS_JSON, retrain_on_full, etc.). Override defaults with env vars.
 #
 # - Modality: swap experts YAML (drop modality or single-modality configs).
 # - Expert sparsity: --topk on the full last-visit expert graph.
-# - Gating architecture: --gate_ablation region_only | modality_only | random
+# - Gating architecture: flat region-only and flat modality-only (--gate_ablation), plus full
+#   hierarchical gating (modality + region gates) via --use_hierarchical_gate.
 #
 # Outputs: ${OUT_ROOT}/<tag>/moe_seed_<seed>.json + moe_aggregated.json per tag.
 #
-# Per-split-seed Optuna hyperparameters: use run_ablation_seeds.sh instead.
 # =============================================================================
 
 set -euo pipefail
@@ -38,7 +36,12 @@ MODALITY_ABLATIONS=(
 
 TOPK_VALUES=(1 3 5)
 
-GATE_ABLATIONS=("gate_region_only:region_only" "gate_modality_only:modality_only" "gate_random:random")
+# Exactly 3 gating runs: output tag | extra CLI (pipe separates tag from args).
+GATE_RUNS=(
+  "gate_region_only|--gate_ablation region_only"
+  "gate_modality_only|--gate_ablation modality_only"
+  "gate_hierarchical|--use_hierarchical_gate"
+)
 
 extract_moe_cli_from_json() {
   python3 - "${PARAMS_JSON}" << 'PYTHON'
@@ -138,10 +141,10 @@ if [[ "${RUN_TOPK_ABLATION}" == "true" ]]; then
 fi
 
 if [[ "${RUN_GATE_ABLATION}" == "true" ]]; then
-  for entry in "${GATE_ABLATIONS[@]}"; do
-    tag="${entry%%:*}"
-    gate_arg="${entry##*:}"
-    run_ablation_loop "${tag}" "${FULL_EXPERTS_CONFIG}" "--gate_ablation ${gate_arg}"
+  for entry in "${GATE_RUNS[@]}"; do
+    tag="${entry%%|*}"
+    extra_cli="${entry#*|}"
+    run_ablation_loop "${tag}" "${FULL_EXPERTS_CONFIG}" "${extra_cli}"
   done
 fi
 
@@ -176,8 +179,8 @@ if [[ "${RUN_AGGREGATION}" == "true" ]]; then
     done
   fi
   if [[ "${RUN_GATE_ABLATION}" == "true" ]]; then
-    for entry in "${GATE_ABLATIONS[@]}"; do
-      aggregate_dir "${entry%%:*}"
+    for entry in "${GATE_RUNS[@]}"; do
+      aggregate_dir "${entry%%|*}"
     done
   fi
 fi
