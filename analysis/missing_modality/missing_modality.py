@@ -22,8 +22,8 @@ Typical usage (examples):
 CV-by-PTID approach (original):
   python scripts/missing_modality.py \
     --split_mode cv_folds \
-    --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-    --splits configs/splits_by_ptid_lastvisit_cv10.json \
+    --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+    --splits configs/splits/splits_by_ptid_lastvisit.json \
     --split_type cv5 \
     --mode moe \
     --train_args "--epochs 40 --batch_size 128 --num_workers 16 --use_hierarchical_gate --lambda_sparse 0.05 --tau 0.5" \
@@ -36,7 +36,7 @@ Train/Test/Val approach (new):
   python scripts/missing_modality.py \
     --split_mode train_test_val \
     --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
-    --splits configs/splits_by_ptid_80_10_10_seed_{seed}.json \
+    --splits configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json \
     --mode moe \
     --seeds "7,13,42,1234,2027" \
     --optuna_results_dir results \
@@ -49,7 +49,7 @@ Train/Test/Val with FT-Transformer baseline:
   python scripts/missing_modality.py \
     --split_mode train_test_val \
     --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
-    --splits configs/splits_by_ptid_80_10_10_seed_{seed}.json \
+    --splits configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json \
     --mode baseline \
     --baseline ftt \
     --seeds "7,13,42,1234,2027" \
@@ -63,7 +63,7 @@ Train/Test/Val with MLP baseline:
   python scripts/missing_modality.py \
     --split_mode train_test_val \
     --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
-    --splits configs/splits_by_ptid_80_10_10_seed_{seed}.json \
+    --splits configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json \
     --mode baseline \
     --baseline mlp \
     --seeds "7,13,42,1234,2027" \
@@ -77,7 +77,7 @@ Train/Test/Val with Logistic Regression baseline:
   python scripts/missing_modality.py \
     --split_mode train_test_val \
     --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
-    --splits configs/splits_by_ptid_80_10_10_seed_{seed}.json \
+    --splits configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json \
     --mode baseline \
     --baseline lr \
     --seeds "7,13,42,1234,2027" \
@@ -308,14 +308,14 @@ def _load_best_hyperparams(optuna_json_path: str) -> Dict:
     """Load best hyperparameters from Optuna result JSON.
     
     Expected formats:
-    1) MoE: {"value": <metric>, "params": {...}}
+    1) mref-ad (train_moe Optuna export): {"value": <metric>, "params": {...}}
     2) Flex-MoE export: {"best_params": {...}, "best_value": ...}
     3) Baselines: {"{baseline}_concat_all": {"best_params": {...}, ...}}
     """
     try:
         data = _read_json(optuna_json_path)
         
-        # Try MoE format first
+        # Try mref-ad / train_moe Optuna format first
         if "params" in data:
             return data["params"]
         # Flex-MoE / generic best_trial JSON (top-level best_params only)
@@ -584,7 +584,7 @@ def main():
         default=None,
         help=(
             "If set, load fixed best hyperparameters from this directory (same for all seeds): "
-            "mref_ad_best_trial.json (moe), flex_moe_best_trial.json (flex_moe), "
+            "mref_ad_best_trial.json (mref-ad), flex_moe_best_trial.json (flex_moe), "
             "ftt_best_trial.json (ftt), mlp_best_trial.json (mlp_concat), logreg_best_trial.json (lr_all)."
         ),
     )
@@ -686,7 +686,7 @@ def _run_cv_folds_mode(args):
 
     # Underlying script
     if args.mode == "moe":
-        trainer = ["python", "-u", "scripts/train_moe.py"]
+        trainer = ["python", "-u", "scripts/mref-ad/train_moe.py"]
     else:
         trainer = ["python", "-u", "scripts/train_baselines.py"]
 
@@ -938,7 +938,7 @@ def _run_train_test_val_mode(args):
     seed_ids = [int(x.strip()) for x in args.seeds.split(",") if x.strip()]
     
     # Build seed list by loading per-seed splits files
-    # --splits should be a pattern like "configs/splits_by_ptid_80_10_10_seed_{seed}.json"
+    # --splits should be a pattern like "configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json"
     seeds_list = []
     for seed_id in seed_ids:
         splits_path = _format_splits_template(args.splits, seed_id)
@@ -959,7 +959,7 @@ def _run_train_test_val_mode(args):
 
     # Underlying script (train_test_val)
     if args.mode == "moe":
-        trainer = ["python", "-u", "scripts/train_moe.py"]
+        trainer = ["python", "-u", "scripts/mref-ad/train_moe.py"]
     elif args.mode == "baseline":
         trainer = ["python", "-u", "scripts/train_baselines.py"]
     else:

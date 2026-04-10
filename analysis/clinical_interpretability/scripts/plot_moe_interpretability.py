@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Plot MoE interpretability from fold-based or seed-based results.
+Plot mref-ad (MoE) interpretability from fold-based or seed-based results.
 
 Generates:
     1. Bar plot: mean ± std gate weights across folds/seeds
@@ -17,7 +17,7 @@ Usage:
     python3 scripts/plot_moe_interpretability.py --input "results/moe_seed_*_full_final_per_subject.json" --input_type seed
   
     # Fold-based (CV folds)
-    python3 scripts/plot_moe_interpretability.py --input results/moe_hierarchical_cv10_full.json --input_type fold
+    python3 scripts/plot_moe_interpretability.py --input results/moe_hierarchical_lastvisit_full.json --input_type fold
   
     # Custom output directory
     python3 scripts/plot_moe_interpretability.py --output_dir results/my_plots
@@ -34,7 +34,7 @@ import argparse
 # -----------------------------
 # Parse arguments
 # -----------------------------
-ap = argparse.ArgumentParser(description="Plot MoE interpretability from fold-based or seed-based results")
+ap = argparse.ArgumentParser(description="Plot mref-ad (MoE) interpretability from fold- or seed-based results")
 ap.add_argument("--input", type=str, default=None, help="Input JSON file (fold-based) or glob pattern for seed-based per-subject JSONs (e.g., 'results/moe_seed_*_full_final_per_subject.json')")
 ap.add_argument("--input_type", type=str, choices=["fold", "seed", "auto"], default="auto", help="Type of input: 'fold' for CV folds, 'seed' for multi-seed results, 'auto' to detect")
 ap.add_argument("--output_dir", type=str, default="results/plots", help="Output directory for plots")
@@ -53,7 +53,7 @@ else:
         INPUT_TYPE = "seed"
         print(f"[INFO] Auto-detected seed-based results: {len(seed_files)} files")
     else:
-        IN_PATH = "results/moe_hierarchical_cv10_full.json"
+        IN_PATH = "results/moe_hierarchical_lastvisit_full.json"
         INPUT_TYPE = "fold"
         print(f"[INFO] Using default fold-based results")
 

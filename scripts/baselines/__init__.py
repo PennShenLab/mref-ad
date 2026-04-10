@@ -15,7 +15,7 @@ from typing import List, Tuple
 AVAILABLE_BASELINES = [
     "all", "single", "concat", "latefusion",
     "mlp_single", "mlp_concat", "mlp_latefusion", "mlp_all",
-    "rf_all", "xgb_all", "svm_all", "lr_all",
+    "rf_all", "xgb_all", "lr_all",
     # Only the official FT-Transformer is supported now (key: 'ftt')
     "ftt",
 ]
@@ -57,8 +57,6 @@ def build_run_baselines(baseline_arg: str, mods: List[str]) -> List[Tuple[str, s
         run_baselines.append(("rf_concat_all", "rf", None))
     if baseline_arg == "xgb_all":
         run_baselines.append(("xgb_concat_all", "xgb", None))
-    if baseline_arg == "svm_all":
-        run_baselines.append(("svm_concat_all", "svm", None))
     if baseline_arg == "lr_all":
         run_baselines.append(("lr_concat_all", "lr", None))
 

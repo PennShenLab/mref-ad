@@ -4,76 +4,67 @@ usage:
  python -u scripts/train_baselines.py \
   --experts_config configs/experts_files.yaml \
   --baseline mlp_all \
-  --splits configs/splits_by_ptid.json
+  --splits configs/splits/splits_by_ptid.json
 
  python -u scripts/train_baselines.py \
   --experts_config configs/freesurfer_experts_files.yaml \
   --baseline mlp_all \
-  --splits configs/splits_by_ptid.json
+  --splits configs/splits/splits_by_ptid.json
 
 # 5-fold CV
 python scripts/train_baselines.py \
   --experts_config configs/freesurfer_experts_files.yaml \
-  --splits configs/splits_by_ptid.json \
+  --splits configs/splits/splits_by_ptid.json \
   --baseline mlp_all --split_type cv5
 
 # 5-fold CV with last-visit-only splits
 python scripts/train_baselines.py \
   --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit.json \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --baseline mlp_all \
   --split_type cv5 \
   --out results/baselines_lastvisit_cv_folds.json
 
 # 10-fold CV with last-visit-only splits
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --baseline mlp_all \
   --split_type cv5 \
-  --out results/baselines_lastvisit_cv10_folds.json \
+  --out results/baselines_lastvisit_folds.json \
   --early_stop_metric val_loss
 
 # Random Forest
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --baseline rf_all \
   --split_type cv5 \
-  --out results/baselines_rf_lastvisit_cv10.json \
+  --out results/baselines_rf_lastvisit.json \
     --save_sklearn_models
 
 # XGBoost
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --baseline xgb_all \
   --split_type cv5 \
-  --out results/baselines_xgb_lastvisit_cv10.json \
+  --out results/baselines_xgb_lastvisit.json \
   --save_sklearn_models
-
-# SVM (RBF kernel)
-python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
-  --baseline svm_all \
-  --split_type cv5 \
-  --out results/baselines_svm_lastvisit_cv10.json \
-    --save_sklearn_models
 
 # Logistic regression
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --baseline lr_all \
   --split_type cv5 \
-  --out results/baselines_lr_lastvisit_cv10.json \
+  --out results/baselines_lr_lastvisit.json \
     --save_sklearn_models
 
 # FT Transformer
 python -u scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --baseline ftt \
   --split_type cv5 \
   --early_stop_metric val_loss \
@@ -83,8 +74,8 @@ python -u scripts/train_baselines.py \
 # 100 trials for classical ML and 200 trials for NN based models (MLP, FTT)
 
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_80_10_10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_80_10_10.json \
   --baseline rf_all \
   --split_type train_val_test\
   --tune_trials 100 \
@@ -92,8 +83,8 @@ python scripts/train_baselines.py \
   --out results/optuna_rf.json
 
   python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_80_10_10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_80_10_10.json \
   --baseline xgb_all \
   --split_type train_val_test\
   --tune_trials 100 \
@@ -101,8 +92,8 @@ python scripts/train_baselines.py \
   --out results/optuna_xgb.json
 
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_80_10_10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_80_10_10.json \
   --baseline mlp_concat \
   --early_stop_metric val_loss \
   --split_type train_val_test\
@@ -112,8 +103,8 @@ python scripts/train_baselines.py \
 
 # Get result of best hyperparameters
 python scripts/train_baselines.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_80_10_10.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_80_10_10.json \
   --baseline lr_all \
   --split_type train_val_test \
   --retrain_on_full \
@@ -123,7 +114,17 @@ python scripts/train_baselines.py \
 """
 
 import argparse, os, re, json, random
+import sys
 from pathlib import Path
+
+# Path order: repo root first (shared `utils`), then `scripts/` (package `baselines`).
+_scripts_dir = Path(__file__).resolve().parent.parent
+_repo_root = _scripts_dir.parent
+if str(_scripts_dir) not in sys.path:
+    sys.path.insert(0, str(_scripts_dir))
+if str(_repo_root) not in sys.path:
+    sys.path.insert(0, str(_repo_root))
+
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple
@@ -140,7 +141,6 @@ from torch.utils.data import DataLoader, TensorDataset
 
 # Additional imports for new baselines
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC
 import xgboost as xgb
 import joblib
 import pickle
@@ -149,25 +149,16 @@ import utils
 from utils import (
     set_seed, load_experts_from_yaml, load_splits
 )
-# Use the canonical, shared metric implementations from `scripts/utils.py`
+# Use the canonical, shared metric implementations from repo-root `utils.py`
 from utils import eval_multiclass_metrics, eval_confusion_report, macro_auroc
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
-warnings.filterwarnings("ignore", message="'multi_class' was deprecated")
 
 # When the script is run as `python scripts/train_baselines.py` the
 # interpreter sets sys.path[0] to the `scripts/` folder. That means
 # sibling top-level packages (like `baselines/`) are not discoverable
-# unless the repo root is on PYTHONPATH. Insert the repo root into
-# sys.path so `import baselines` works when run from the project root.
-import sys
-
-repo_root = Path(__file__).resolve().parent.parent
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
-
 import baselines
 from baselines import registry as baselines_registry
 from baselines import runners as baselines_runners
@@ -181,7 +172,7 @@ def train_eval_sklearn_baselines(baseline_name: str, df: pd.DataFrame, cols: Lis
     """
     return baselines_runners.train_eval_sklearn_baselines(baseline_name, df, cols, tr_idx, va_idx, seed=seed, n_jobs=n_jobs)
 
-# ---------- MLP baselines (capacity-matched to MoE experts) ----------
+# ---------- MLP baselines (capacity-matched to mref-ad MoE experts) ----------
 # class MLP(nn.Module):
 #     def __init__(self, d, hidden=128, drop=0.2, n_classes=3):
 #         super().__init__()
@@ -377,7 +368,7 @@ def _run_train_val_test(args, df, groups, classes):
             module_name = "mlp"
         elif btype.startswith("ftt") or key.startswith("ftt"):
             module_name = "ftt"
-        elif btype in {"rf", "xgb", "svm", "lr"} or key in {"rf_all", "xgb_all", "svm_all", "lr_all"}:
+        elif btype in {"rf", "xgb", "lr"} or key in {"rf_all", "xgb_all", "lr_all"}:
             module_name = "sklearn_baselines"
 
         handled = False
@@ -458,9 +449,9 @@ def _run_train_val_test(args, df, groups, classes):
                         train_mode = "TRAIN only (no retrain)" if skip_retrain else "TRAIN+VAL (retrain mode)"
                         print(f"[INFO] Using fixed sklearn params: training on {train_mode} with C={p.get('C', 1.0)}")
                         from baselines.sklearn_baselines import (
+                            LOGISTIC_REGRESSION_MAX_ITER,
                             LogisticRegressionRunner,
                             RandomForestRunner,
-                            LinearSVCRunner,
                             XGBoostRunner,
                         )
                         from baselines.preprocessing import _build_xy
@@ -482,7 +473,7 @@ def _run_train_val_test(args, df, groups, classes):
                         if btype.startswith("lr") or key.startswith("lr"):
                             runner = LogisticRegressionRunner(
                                 C=p.get("C", 1.0),
-                                max_iter=p.get("max_iter", 2000),
+                                max_iter=p.get("max_iter", LOGISTIC_REGRESSION_MAX_ITER),
                                 n_jobs=p.get("n_jobs", 1),
                                 seed=utils.SEED,
                             )
@@ -490,14 +481,9 @@ def _run_train_val_test(args, df, groups, classes):
                             runner = RandomForestRunner(
                                 n_estimators=p.get("n_estimators", 100),
                                 max_depth=p.get("max_depth", None),
+                                min_samples_split=p.get("min_samples_split", 2),
                                 min_samples_leaf=p.get("min_samples_leaf", 1),
                                 n_jobs=p.get("n_jobs", 1),
-                                seed=utils.SEED,
-                            )
-                        elif btype.startswith("svm") or key.startswith("svm"):
-                            runner = LinearSVCRunner(
-                                C=p.get("C", 1.0),
-                                max_iter=p.get("max_iter", 5000),
                                 seed=utils.SEED,
                             )
                         elif btype.startswith("xgb") or key.startswith("xgb"):
@@ -1053,8 +1039,6 @@ def _run_cv5(args, df, groups, classes):
         out_path = "results/baselines_rf.json"
     elif args.baseline == "xgb_all" and args.out == "results/baselines.json":
         out_path = "results/baselines_xgb.json"
-    elif args.baseline == "svm_all" and args.out == "results/baselines.json":
-        out_path = "results/baselines_svm.json"
     else:
         out_path = args.out
     _save_json(out_path, out_data)
@@ -1064,12 +1048,12 @@ def _run_cv5(args, df, groups, classes):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--experts_config", default=None,
-                    help="YAML mapping of expert_name -> CSV path (same as train_moe).")
+                    help="YAML mapping of expert_name -> CSV path (same as mref-ad train_moe).")
     ap.add_argument("--baseline", default="all",
                     choices=[
                         "all","single","concat","latefusion",
                         "mlp_single","mlp_concat","mlp_latefusion","mlp_all",
-                        "rf_all","xgb_all","svm_all","lr_all",
+                        "rf_all","xgb_all","lr_all",
                         "ftt_all", "ftt",
                     ])
     ap.add_argument("--train_size", type=float, default=0.8)

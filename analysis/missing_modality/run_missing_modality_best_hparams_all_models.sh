@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Train/eval missing-modality protocol (train_test_val) for MREF-AD MoE, Flex-MoE,
+# Train/eval missing-modality protocol (train_test_val) for mref-ad (train_moe), Flex-MoE,
 # FT-Transformer, MLP, and logistic regression using fixed best hyperparameters
 # from mref-ad/configs/best_hyperparameters (override with HYPERPARAM_DIR).
 #
@@ -16,9 +16,9 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${REPO_ROOT}"
 
 HYPERPARAM_DIR="${HYPERPARAM_DIR:-${HOME}/mref-ad/mref-ad/configs/best_hyperparameters}"
-EXPERTS_CONFIG="${EXPERTS_CONFIG:-configs/freesurfer_lastvisit_cv10_experts_files.yaml}"
+EXPERTS_CONFIG="${EXPERTS_CONFIG:-configs/freesurfer_lastvisit_experts_files.yaml}"
 # Default must not use ${VAR:-literal_{seed}.json}: bash brace expansion turns {seed}.json into {seed.json}.
-DEFAULT_SPLITS_PATTERN='configs/splits_by_ptid_80_10_10_seed_{seed}.json'
+DEFAULT_SPLITS_PATTERN='configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json'
 SPLITS_PATTERN="${SPLITS_PATTERN:-$DEFAULT_SPLITS_PATTERN}"
 OUT_DIR="${OUT_DIR:-results/missingness}"
 SEEDS="${SEEDS:-7,13,42,1234,2027,99,123,555,999,1337}"

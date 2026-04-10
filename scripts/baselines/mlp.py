@@ -34,6 +34,32 @@ class MLPConfig:
     num_workers: int = 0
 
 
+def mlp_config_for_retrain(
+    best_params: Dict[str, Any],
+    *,
+    retrain_epochs: int,
+    seed: int,
+    early_stop_metric: str = "val_loss",
+    patience: int = 10,
+) -> MLPConfig:
+    """Build ``MLPConfig`` for ``retrain_mlp_on_full`` (shared by tuning and ``analysis/evaluation/eval_mlp``).
+
+    ``patience`` / ``early_stop_metric`` are included for consistency with ``fit_mlp`` tooling; the refit
+    helper only uses architecture, optimizer, batch, seed, and the separate ``epochs=`` argument.
+    """
+    return MLPConfig(
+        hidden=int(best_params.get("hidden", 128)),
+        drop=float(best_params.get("drop", 0.1)),
+        epochs=int(retrain_epochs),
+        batch_size=int(best_params.get("batch", 128)),
+        lr=float(best_params.get("lr", 1e-3)),
+        weight_decay=float(best_params.get("wd", 1e-4)),
+        patience=int(patience),
+        early_stop_metric=early_stop_metric,
+        seed=int(seed),
+    )
+
+
 # -----------------------------
 # Model
 # -----------------------------
@@ -65,7 +91,7 @@ class MLP(nn.Module):
 # -----------------------------
 # Utils
 # -----------------------------
-from .utils import get_default_device
+from .device_util import get_default_device
 
 
 def _class_weights(y: np.ndarray, n_classes: int, device: torch.device) -> torch.Tensor:
@@ -345,18 +371,36 @@ def retrain_mlp_on_full(
 
     Returns the final model.state_dict() (CPU tensors).
     If Xte and yte are provided, prints test metrics at each epoch.
+
+    Uses ``config.seed`` for ``torch.manual_seed`` and the training ``DataLoader`` shuffle
+    generator so repeated calls with the same data and config match (CPU). Some GPU ops may
+    still be nondeterministic unless the environment enforces deterministic algorithms.
     """
     if device is None:
         device = get_default_device()
+
+    # Match fit_mlp reproducibility: fixed init + seeded shuffle (shuffle=True without a generator
+    # makes batch order and prior global RNG state vary across processes/runs).
+    s = int(config.seed)
+    torch.manual_seed(s)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(s)
 
     model = MLP(d_in=X_all.shape[1], hidden=config.hidden, drop=config.drop, n_classes=config.n_classes).to(device)
     weights = _class_weights(y_all, config.n_classes, device)
     crit = nn.CrossEntropyLoss(weight=weights)
     opt = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
 
-    # DataLoader
     ds = TensorDataset(torch.from_numpy(X_all.astype(np.float32)), torch.from_numpy(y_all.astype(np.int64)))
-    dl = DataLoader(ds, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+    g = torch.Generator()
+    g.manual_seed(s)
+    dl = DataLoader(
+        ds,
+        batch_size=config.batch_size,
+        shuffle=True,
+        num_workers=config.num_workers,
+        generator=g,
+    )
 
     for ep in range(1, max(1, epochs) + 1):
         model.train()
@@ -434,7 +478,17 @@ def train_val_test(
         # compute validation metrics during fit so Optuna receives a numeric objective
         from baselines.mlp import MLPConfig, fit_mlp
         from utils import eval_multiclass_metrics
-        cfg = MLPConfig(hidden=hidden, drop=drop, epochs=epochs, batch_size=batch, lr=lr, weight_decay=wd, patience=10, early_stop_metric=early_stop_metric)
+        cfg = MLPConfig(
+            hidden=hidden,
+            drop=drop,
+            epochs=epochs,
+            batch_size=batch,
+            lr=lr,
+            weight_decay=wd,
+            patience=10,
+            early_stop_metric=early_stop_metric,
+            seed=seed,
+        )
         out = fit_mlp(Xtr, ytr, Xva, yva, config=cfg, metric_fn=eval_multiclass_metrics)
         # record the trial-level best_epoch so we can reuse it later without
         # needing to re-run the best hyperparams. Also, if an out_dir was
@@ -504,6 +558,7 @@ def train_val_test(
                     weight_decay=best_params.get("wd", 1e-4),
                     patience=10,
                     early_stop_metric=early_stop_metric,
+                    seed=seed,
                 )
                 # build model from saved state and score on validation set
                 model = load_mlp_from_state(Xtr.shape[1], state, config=cfg_best)
@@ -531,6 +586,7 @@ def train_val_test(
                 weight_decay=best_params.get("wd", 1e-4),
                 patience=10,
                 early_stop_metric=early_stop_metric,
+                seed=seed,
             )
             out_best = fit_mlp(Xtr, ytr, Xva, yva, config=cfg_best, metric_fn=eval_multiclass_metrics)
             val_metrics_best = {
@@ -562,15 +618,12 @@ def train_val_test(
 
     retrain_epochs = best_epoch if best_epoch is not None else tuned_epochs
 
-    cfg = MLPConfig(
-        hidden=best_params.get("hidden", 128),
-        drop=best_params.get("drop", 0.1),
-        epochs=retrain_epochs,
-        batch_size=int(best_params.get("batch", 128)),
-        lr=best_params.get("lr", 1e-3),
-        weight_decay=best_params.get("wd", 1e-4),
-        patience=10,
+    cfg = mlp_config_for_retrain(
+        best_params,
+        retrain_epochs=int(retrain_epochs),
+        seed=seed,
         early_stop_metric=early_stop_metric,
+        patience=10,
     )
 
     X_all = np.vstack([Xtr, Xva])
@@ -648,15 +701,12 @@ def train_val_test(
         try:
             second_params = dict(second.params)
             # Build MLPConfig for second-best
-            cfg_second = MLPConfig(
-                hidden=second_params.get("hidden", 128),
-                drop=second_params.get("drop", 0.1),
-                epochs=int(second_params.get("epochs", 50)),
-                batch_size=int(second_params.get("batch", 128)),
-                lr=second_params.get("lr", 1e-3),
-                weight_decay=second_params.get("wd", 1e-4),
-                patience=10,
+            cfg_second = mlp_config_for_retrain(
+                second_params,
+                retrain_epochs=int(second_params.get("epochs", 50)),
+                seed=seed,
                 early_stop_metric=early_stop_metric,
+                patience=10,
             )
             # Compute validation snapshot for second-best by fitting on TRAIN only
             try:

@@ -3,9 +3,9 @@ set -euo pipefail
 
 # Install Flex-MoE and (optionally) FastMoE from source.
 # Usage:
-#   bash scripts/install_flex_moe.sh
-#   bash scripts/install_flex_moe.sh --skip-fastmoe
-#   FLEX_MOE_DIR=third_party/flex-moe bash scripts/install_flex_moe.sh
+#   bash scripts/baselines/install_flex_moe.sh
+#   bash scripts/baselines/install_flex_moe.sh --skip-fastmoe
+#   FLEX_MOE_DIR=third_party/flex-moe bash scripts/baselines/install_flex_moe.sh
 
 SKIP_FASTMOE=false
 ALLOW_BREAK_SYSTEM_PACKAGES=false

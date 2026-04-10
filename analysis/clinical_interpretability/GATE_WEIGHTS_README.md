@@ -1,6 +1,6 @@
 # Gate Weight Extraction and Brain Visualization Workflow
 
-This directory contains scripts for extracting gate weights from trained MoE models and visualizing them on brain maps.
+This directory contains scripts for extracting gate weights from trained **mref-ad** (MoE) models and visualizing them on brain maps.
 
 ## Quick Start
 

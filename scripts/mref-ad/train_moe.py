@@ -1,62 +1,52 @@
 #!/usr/bin/env python3
 """
-python scripts/train_moe.py \
+mref-ad — multimodal mixture-of-experts trainer (flat or hierarchical gating).
+
+Entry point in-repo: ``scripts/mref-ad/train_moe.py`` (file name is historical).
+
+python scripts/mref-ad/train_moe.py \
   --experts_config configs/experts_files.yaml \
-  --splits configs/splits_by_ptid.json \
+  --splits configs/splits/splits_by_ptid.json \
   --epochs 50 \
   --batch_size 128
 
 # With freesurfer experts:
-python scripts/train_moe.py \
+python scripts/mref-ad/train_moe.py \
   --experts_config configs/freesurfer_experts_files.yaml \
-  --splits configs/splits_by_ptid.json \
+  --splits configs/splits/splits_by_ptid.json \
   --epochs 50 \
   --batch_size 128
 
 # 5-fold CV:
-python scripts/train_moe.py \
+python scripts/mref-ad/train_moe.py \
   --experts_config configs/freesurfer_experts_files.yaml \
-  --splits configs/splits_by_ptid.json \
+  --splits configs/splits/splits_by_ptid.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
   --lr 1e-3
 
 # 5-fold CV with last visit:
-python scripts/train_moe.py \
+python scripts/mref-ad/train_moe.py \
   --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit.json \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
   --out_json results/moe_lastvisit_cv_folds
 
 # 10-fold CV with last visit:
-python scripts/train_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+python scripts/mref-ad/train_moe.py \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
-  --out_json results/moe_lastvisit_cv10_folds
+  --out_json results/moe_lastvisit_folds
 
-python scripts/train_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
-  --split_type cv5 \
-  --epochs 40 \
-  --batch_size 128 \
-  --num_workers 16 \
-  --use_hierarchical_gate \
-  --lambda_sparse 0.05 \
-  --tau 0.5 \
-  --save_payloads \
-  --redact_ptid \
-  --out_json results/moe_hierarchical_cv10_isbi.json
-
-  python scripts/train_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+python scripts/mref-ad/train_moe.py \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
@@ -66,11 +56,25 @@ python scripts/train_moe.py \
   --tau 0.5 \
   --save_payloads \
   --redact_ptid \
-  --out_json results/moe_hierarchical_cv10_isbi.json
+  --out_json results/moe_hierarchical_lastvisit_isbi.json
 
-python scripts/train_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+  python scripts/mref-ad/train_moe.py \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
+  --split_type cv5 \
+  --epochs 40 \
+  --batch_size 128 \
+  --num_workers 16 \
+  --use_hierarchical_gate \
+  --lambda_sparse 0.05 \
+  --tau 0.5 \
+  --save_payloads \
+  --redact_ptid \
+  --out_json results/moe_hierarchical_lastvisit_isbi.json
+
+python scripts/mref-ad/train_moe.py \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
@@ -81,29 +85,29 @@ python scripts/train_moe.py \
   --save_payloads \
   --redact_ptid \
   --save_val_predictions \
-  --out_json results/moe_hierarchical_cv10_ichi.json
+  --out_json results/moe_hierarchical_lastvisit_ichi.json
 
 # Top-k ablation
 # Outputs: 
-# - results/moe_hierarchical_cv10_top5.json
-# - results/moe_hierarchical_cv10_top3.json
-# - results/moe_hierarchical_cv10_top1.json
-python scripts/train_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_lastvisit_cv10.json \
+# - results/moe_hierarchical_lastvisit_top5.json
+# - results/moe_hierarchical_lastvisit_top3.json
+# - results/moe_hierarchical_lastvisit_top1.json
+python scripts/mref-ad/train_moe.py \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
   --use_hierarchical_gate \
   --topk \
-  --out_json results/moe_hierarchical_cv10 \
+  --out_json results/moe_hierarchical_lastvisit \
   --lambda_sparse 0.1 \
   --tau 0.5
 
 # Modality ablation with last visit:
-python scripts/train_moe.py \
+python scripts/mref-ad/train_moe.py \
   --experts_config configs/freesurfer_lastvisit_no_amyloid.yaml \
-  --splits configs/splits_by_ptid_lastvisit.json \
+  --splits configs/splits/splits_by_ptid_lastvisit.json \
   --split_type cv5 \
   --epochs 40 \
   --batch_size 128 \
@@ -113,9 +117,9 @@ python scripts/train_moe.py \
   --out_json results/moe_lastvisit_cv5_folds_no_amyloid
 
 # Running test evaluation based on best hyperparameters from optuna
-python3 scripts/train_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits configs/splits_by_ptid_80_10_10.json \
+python3 scripts/mref-ad/train_moe.py \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits configs/splits/splits_by_ptid_80_10_10.json \
   --split_type train_val_test \
   --retrain_only \
   --retrain_on_full \
@@ -1111,7 +1115,7 @@ def _dispatch_mode(args, df, groups, classes):
                 base, ext = os.path.splitext(args.out_json)
                 out_path = f"{base}_{out_suffix}{ext or '.json'}"
             else:
-                out_path = f"results/moe_hierarchical_cv10_{out_suffix}.json"
+                out_path = f"results/moe_hierarchical_lastvisit_{out_suffix}.json"
 
             os.makedirs(os.path.dirname(out_path), exist_ok=True)
             with open(out_path, "w") as f:
@@ -3715,7 +3719,7 @@ if __name__ == "__main__":
                         base_name = os.path.splitext(os.path.basename(args.out_json))[0]
                         run_name = f"{base_name}_{out_suffix}"
                     else:
-                        run_name = f"moe_hierarchical_cv10_{out_suffix}"
+                        run_name = f"moe_hierarchical_lastvisit_{out_suffix}"
                     payload_dir = os.path.join("results", "llm_payloads", run_name)
                     os.makedirs(payload_dir, exist_ok=True)
                     payload_path = os.path.join(
@@ -3796,7 +3800,7 @@ if __name__ == "__main__":
                 base, ext = os.path.splitext(args.out_json)
                 out_path = f"{base}_{out_suffix}{ext or '.json'}"
             else:
-                out_path = f"results/moe_hierarchical_cv10_{out_suffix}.json"
+                out_path = f"results/moe_hierarchical_lastvisit_{out_suffix}.json"
 
             os.makedirs(os.path.dirname(out_path), exist_ok=True)
             with open(out_path, "w") as f:

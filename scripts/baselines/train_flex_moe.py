@@ -4,8 +4,8 @@ Train/test Flex-MoE on this repository's experts YAML and PTID split JSONs.
 
 Example (10 seeds with matching split files):
 python scripts/train_flex_moe.py \
-  --experts_config configs/freesurfer_lastvisit_cv10_experts_files.yaml \
-  --splits_template configs/splits_by_ptid_80_10_10_seed_{seed}.json \
+  --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+  --splits_template configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json \
   --seeds 7 13 42 1234 2027 99 123 555 999 1337 \
   --out_json results/flex_moe_10seeds.json
 """
@@ -30,7 +30,7 @@ import utils
 def parse_args():
     ap = argparse.ArgumentParser(description="Run Flex-MoE with repo-native splits/data")
     ap.add_argument("--experts_config", required=True, help="YAML mapping expert_name -> CSV path")
-    ap.add_argument("--splits_template", required=True, help="Template path with {seed}, e.g. configs/splits_by_ptid_80_10_10_seed_{seed}.json")
+    ap.add_argument("--splits_template", required=True, help="Template path with {seed}, e.g. configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json")
     ap.add_argument("--seeds", type=int, nargs="+", required=True, help="Seed list for train/test runs")
     ap.add_argument("--out_json", default="results/flex_moe_results.json")
     ap.add_argument("--save_dir", default="results/flex_moe_ckpts")

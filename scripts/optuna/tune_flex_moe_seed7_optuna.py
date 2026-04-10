@@ -57,7 +57,7 @@ def objective(args, trial: optuna.Trial) -> float:
         out_json = Path(td) / "trial_result.json"
         cmd = [
             sys.executable,
-            "scripts/train_flex_moe.py",
+            str(Path(__file__).resolve().parent.parent / "baselines" / "train_flex_moe.py"),
             "--experts_config",
             args.experts_config,
             "--splits_template",

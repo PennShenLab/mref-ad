@@ -1,91 +1,0 @@
-[INFO] starting MoE training…
-[INFO] rows=1530 | feats: amy_brainstem=1, amy_cerebellum=2, amy_cerebral_cortex=1, amy_cingulate=12, amy_corpus_callosum_wm=5, amy_frontal_lobe=27, amy_occipital_lobe=12, amy_parietal_lobe=12, amy_sensory_motor_cortex=9, amy_striatum_basal_ganglia=12, amy_subcortical_temporal=6, amy_subcortical_thalamus=3, amy_temporal_lobe=30, amy_ventricles=7
-[INFO] --retrain_only set: skipping initial train->val (tune phase)
-[INFO] wrote train/val results to results/ablations_seed7_bestparams_all10/modality_amyloid_only/moe_seed_123.json
-[INFO] Retraining on train+val and evaluating on test...
-[INFO] NOTE: Tune phase metrics on VAL set, retrain phase metrics on TEST set (different data)
-[INFO] Tune phase split: train=1224 | val=153
-[INFO] Retrain phase split: train=1377 | test=153
-[WARN] best_epoch not found in tune phase, retraining with original settings
-[INFO] device = cuda (NVIDIA A40)
-[INFO] using fixed splits: train=1377 | val=153
-[INFO] using fixed splits: train=1377 | val=153
-[INFO] Early stopping metric: val_loss
-Epoch 1 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 1 [train]:   5%|▍         | 1/22 [00:02<01:00,  2.86s/it]Epoch 1 [train]:  18%|█▊        | 4/22 [00:02<00:10,  1.73it/s]Epoch 1 [train]:  32%|███▏      | 7/22 [00:03<00:04,  3.47it/s]Epoch 1 [train]:  45%|████▌     | 10/22 [00:03<00:02,  5.58it/s]Epoch 1 [train]:  59%|█████▉    | 13/22 [00:03<00:01,  7.34it/s]Epoch 1 [train]:  68%|██████▊   | 15/22 [00:03<00:00,  8.40it/s]Epoch 1 [train]:  77%|███████▋  | 17/22 [00:03<00:00,  9.47it/s]Epoch 1 [train]:  86%|████████▋ | 19/22 [00:03<00:00, 10.32it/s]Epoch 1 [train]:  95%|█████████▌| 21/22 [00:04<00:00, 10.95it/s]                                                                [WARN] per-epoch test eval failed at epoch 1: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch1_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 001 | test_loss=0.9008 | test_auc=0.7347 | test_acc=0.5882 | test_bacc=0.6104 | test_f1=0.5450 | lr=4.25e-04
-Epoch 2 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 2 [train]:   5%|▍         | 1/22 [00:02<00:47,  2.27s/it]Epoch 2 [train]:  14%|█▎        | 3/22 [00:02<00:11,  1.59it/s]Epoch 2 [train]:  27%|██▋       | 6/22 [00:02<00:04,  3.71it/s]Epoch 2 [train]:  41%|████      | 9/22 [00:02<00:02,  6.07it/s]Epoch 2 [train]:  55%|█████▍    | 12/22 [00:02<00:01,  8.48it/s]Epoch 2 [train]:  64%|██████▎   | 14/22 [00:02<00:00, 10.05it/s]Epoch 2 [train]:  73%|███████▎  | 16/22 [00:02<00:00, 11.62it/s]Epoch 2 [train]:  82%|████████▏ | 18/22 [00:03<00:00,  5.26it/s]Epoch 2 [train]:  91%|█████████ | 20/22 [00:03<00:00,  6.68it/s]Epoch 2 [train]: 100%|██████████| 22/22 [00:04<00:00,  8.30it/s]                                                                [WARN] per-epoch test eval failed at epoch 2: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch2_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 002 | test_loss=0.8159 | test_auc=0.7753 | test_acc=0.6013 | test_bacc=0.6019 | test_f1=0.5771 | lr=4.25e-04
-Epoch 3 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 3 [train]:   5%|▍         | 1/22 [00:02<00:50,  2.40s/it]Epoch 3 [train]:  14%|█▎        | 3/22 [00:02<00:12,  1.47it/s]Epoch 3 [train]:  23%|██▎       | 5/22 [00:02<00:06,  2.70it/s]Epoch 3 [train]:  32%|███▏      | 7/22 [00:02<00:03,  4.12it/s]Epoch 3 [train]:  41%|████      | 9/22 [00:02<00:02,  5.59it/s]Epoch 3 [train]:  50%|█████     | 11/22 [00:03<00:01,  7.10it/s]Epoch 3 [train]:  59%|█████▉    | 13/22 [00:03<00:01,  8.51it/s]Epoch 3 [train]:  68%|██████▊   | 15/22 [00:03<00:00,  9.75it/s]Epoch 3 [train]:  77%|███████▋  | 17/22 [00:03<00:00,  6.43it/s]Epoch 3 [train]:  86%|████████▋ | 19/22 [00:04<00:00,  7.71it/s]Epoch 3 [train]:  95%|█████████▌| 21/22 [00:04<00:00,  8.89it/s]                                                                [WARN] per-epoch test eval failed at epoch 3: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch3_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 003 | test_loss=0.7809 | test_auc=0.7817 | test_acc=0.6275 | test_bacc=0.6440 | test_f1=0.6079 | lr=4.25e-04
-Epoch 4 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 4 [train]:   5%|▍         | 1/22 [00:02<00:50,  2.40s/it]Epoch 4 [train]:  14%|█▎        | 3/22 [00:02<00:12,  1.50it/s]Epoch 4 [train]:  27%|██▋       | 6/22 [00:02<00:04,  3.54it/s]Epoch 4 [train]:  41%|████      | 9/22 [00:02<00:02,  5.92it/s]Epoch 4 [train]:  55%|█████▍    | 12/22 [00:02<00:01,  8.54it/s]Epoch 4 [train]:  68%|██████▊   | 15/22 [00:02<00:00, 11.27it/s]Epoch 4 [train]:  82%|████████▏ | 18/22 [00:03<00:00,  5.83it/s]Epoch 4 [train]:  95%|█████████▌| 21/22 [00:04<00:00,  7.65it/s]                                                                [WARN] per-epoch test eval failed at epoch 4: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch4_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 004 | test_loss=0.7744 | test_auc=0.7828 | test_acc=0.5882 | test_bacc=0.6050 | test_f1=0.5647 | lr=4.25e-04
-Epoch 5 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 5 [train]:   5%|▍         | 1/22 [00:02<00:49,  2.37s/it]Epoch 5 [train]:  14%|█▎        | 3/22 [00:02<00:12,  1.52it/s]Epoch 5 [train]:  23%|██▎       | 5/22 [00:02<00:05,  2.86it/s]Epoch 5 [train]:  36%|███▋      | 8/22 [00:02<00:02,  5.18it/s]Epoch 5 [train]:  45%|████▌     | 10/22 [00:02<00:01,  6.76it/s]Epoch 5 [train]:  55%|█████▍    | 12/22 [00:03<00:01,  8.15it/s]Epoch 5 [train]:  64%|██████▎   | 14/22 [00:03<00:00,  9.31it/s]Epoch 5 [train]:  73%|███████▎  | 16/22 [00:03<00:00, 10.27it/s]Epoch 5 [train]:  82%|████████▏ | 18/22 [00:03<00:00,  5.98it/s]Epoch 5 [train]:  91%|█████████ | 20/22 [00:04<00:00,  7.33it/s]Epoch 5 [train]: 100%|██████████| 22/22 [00:04<00:00,  8.59it/s]                                                                [DEBUG] tau=0.5557, entropy=2.5618, diversity=0.0001
-[WARN] per-epoch test eval failed at epoch 5: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch5_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 005 | test_loss=0.7634 | test_auc=0.7832 | test_acc=0.6013 | test_bacc=0.6144 | test_f1=0.5887 | lr=2.12e-04
-Epoch 6 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 6 [train]:   5%|▍         | 1/22 [00:02<00:47,  2.28s/it]Epoch 6 [train]:  14%|█▎        | 3/22 [00:02<00:11,  1.59it/s]Epoch 6 [train]:  27%|██▋       | 6/22 [00:02<00:04,  3.74it/s]Epoch 6 [train]:  41%|████      | 9/22 [00:02<00:02,  6.10it/s]Epoch 6 [train]:  55%|█████▍    | 12/22 [00:02<00:01,  8.83it/s]Epoch 6 [train]:  68%|██████▊   | 15/22 [00:02<00:00, 11.68it/s]Epoch 6 [train]:  82%|████████▏ | 18/22 [00:03<00:00,  5.75it/s]Epoch 6 [train]:  95%|█████████▌| 21/22 [00:04<00:00,  7.68it/s]                                                                [WARN] per-epoch test eval failed at epoch 6: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch6_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 006 | test_loss=0.7640 | test_auc=0.7813 | test_acc=0.6209 | test_bacc=0.6308 | test_f1=0.6074 | lr=2.12e-04
-Epoch 7 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 7 [train]:   5%|▍         | 1/22 [00:02<00:47,  2.28s/it]Epoch 7 [train]:  14%|█▎        | 3/22 [00:02<00:12,  1.58it/s]Epoch 7 [train]:  27%|██▋       | 6/22 [00:02<00:04,  3.71it/s]Epoch 7 [train]:  41%|████      | 9/22 [00:02<00:02,  6.21it/s]Epoch 7 [train]:  55%|█████▍    | 12/22 [00:02<00:01,  8.97it/s]Epoch 7 [train]:  68%|██████▊   | 15/22 [00:02<00:00, 11.80it/s]Epoch 7 [train]:  82%|████████▏ | 18/22 [00:03<00:00,  5.62it/s]Epoch 7 [train]:  91%|█████████ | 20/22 [00:04<00:00,  6.78it/s]Epoch 7 [train]: 100%|██████████| 22/22 [00:04<00:00,  7.97it/s]                                                                [WARN] per-epoch test eval failed at epoch 7: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch7_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 007 | test_loss=0.7649 | test_auc=0.7803 | test_acc=0.6209 | test_bacc=0.6356 | test_f1=0.6050 | lr=2.12e-04
-Epoch 8 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 8 [train]:   5%|▍         | 1/22 [00:02<00:51,  2.44s/it]Epoch 8 [train]:  18%|█▊        | 4/22 [00:02<00:08,  2.01it/s]Epoch 8 [train]:  32%|███▏      | 7/22 [00:02<00:03,  3.98it/s]Epoch 8 [train]:  45%|████▌     | 10/22 [00:02<00:01,  6.28it/s]Epoch 8 [train]:  59%|█████▉    | 13/22 [00:02<00:01,  8.84it/s]Epoch 8 [train]:  73%|███████▎  | 16/22 [00:03<00:00, 11.53it/s]Epoch 8 [train]:  86%|████████▋ | 19/22 [00:04<00:00,  5.96it/s]Epoch 8 [train]: 100%|██████████| 22/22 [00:04<00:00,  7.90it/s]                                                                [WARN] per-epoch test eval failed at epoch 8: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch8_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 008 | test_loss=0.7613 | test_auc=0.7798 | test_acc=0.6013 | test_bacc=0.6130 | test_f1=0.5837 | lr=2.12e-04
-Epoch 9 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 9 [train]:   5%|▍         | 1/22 [00:02<00:50,  2.41s/it]Epoch 9 [train]:  14%|█▎        | 3/22 [00:02<00:12,  1.51it/s]Epoch 9 [train]:  23%|██▎       | 5/22 [00:02<00:05,  2.86it/s]Epoch 9 [train]:  32%|███▏      | 7/22 [00:02<00:03,  4.47it/s]Epoch 9 [train]:  45%|████▌     | 10/22 [00:02<00:01,  7.27it/s]Epoch 9 [train]:  59%|█████▉    | 13/22 [00:02<00:00, 10.22it/s]Epoch 9 [train]:  73%|███████▎  | 16/22 [00:03<00:00, 13.06it/s]Epoch 9 [train]:  86%|████████▋ | 19/22 [00:04<00:00,  6.23it/s]Epoch 9 [train]:  95%|█████████▌| 21/22 [00:04<00:00,  7.23it/s]                                                                [WARN] per-epoch test eval failed at epoch 9: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch9_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 009 | test_loss=0.7684 | test_auc=0.7721 | test_acc=0.6209 | test_bacc=0.6356 | test_f1=0.6084 | lr=1.06e-04
-Epoch 10 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 10 [train]:   5%|▍         | 1/22 [00:02<00:48,  2.29s/it]Epoch 10 [train]:  14%|█▎        | 3/22 [00:02<00:12,  1.58it/s]Epoch 10 [train]:  27%|██▋       | 6/22 [00:02<00:04,  3.71it/s]Epoch 10 [train]:  41%|████      | 9/22 [00:02<00:02,  6.20it/s]Epoch 10 [train]:  55%|█████▍    | 12/22 [00:02<00:01,  8.95it/s]Epoch 10 [train]:  68%|██████▊   | 15/22 [00:02<00:00, 11.82it/s]Epoch 10 [train]:  82%|████████▏ | 18/22 [00:03<00:00,  5.41it/s]Epoch 10 [train]:  91%|█████████ | 20/22 [00:04<00:00,  6.20it/s]Epoch 10 [train]: 100%|██████████| 22/22 [00:04<00:00,  7.00it/s]                                                                 [DEBUG] tau=0.5557, entropy=2.5570, diversity=0.0001
-[WARN] per-epoch test eval failed at epoch 10: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch10_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 010 | test_loss=0.7667 | test_auc=0.7746 | test_acc=0.6209 | test_bacc=0.6356 | test_f1=0.6084 | lr=1.06e-04
-Epoch 11 [train]:   0%|          | 0/22 [00:00<?, ?it/s]Epoch 11 [train]:   5%|▍         | 1/22 [00:02<00:50,  2.41s/it]Epoch 11 [train]:  18%|█▊        | 4/22 [00:02<00:08,  2.04it/s]Epoch 11 [train]:  32%|███▏      | 7/22 [00:02<00:03,  4.03it/s]Epoch 11 [train]:  45%|████▌     | 10/22 [00:02<00:01,  6.34it/s]Epoch 11 [train]:  59%|█████▉    | 13/22 [00:02<00:01,  8.91it/s]Epoch 11 [train]:  73%|███████▎  | 16/22 [00:03<00:00, 11.61it/s]Epoch 11 [train]:  86%|████████▋ | 19/22 [00:04<00:00,  5.86it/s]Epoch 11 [train]: 100%|██████████| 22/22 [00:04<00:00,  7.78it/s]                                                                 [WARN] per-epoch test eval failed at epoch 11: name 'val_idx' is not defined
-[DEBUG] before eval_multiclass_metrics: len(all_y)=0, len(all_p)=0
-[DEBUG] no_validation mode: skipping per-epoch metrics computation (placeholders empty)
-[DEBUG] dumped per-epoch proba/y to results/moe_seed_123_full_epoch11_*.npy
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-Epoch 011 | test_loss=0.7744 | test_auc=0.7692 | test_acc=0.6209 | test_bacc=0.6322 | test_f1=0.6127 | lr=1.06e-04
-[DEBUG] final eval (no_validation): val_loader.dataset length=153
-Final eval:   0%|          | 0/3 [00:00<?, ?it/s]Final eval:  33%|███▎      | 1/3 [00:02<00:04,  2.02s/it]                                                         [DEBUG] final eval batch 1: y.shape=torch.Size([64])
-[DEBUG] final eval batch 2: y.shape=torch.Size([64])
-[DEBUG] final eval batch 3: y.shape=torch.Size([25])
-[DEBUG] final eval processed batches=3, all_p_list_len=153, all_y_len=153
-[DEBUG] eval_multiclass_metrics: y_true.shape=(153,), proba.shape=(153, 3)
-[DEBUG] dumped final eval proba/y/gates/per_subject to results/moe_seed_123_full_final_*.npy/*.json
-[WARN] could not compute confusion_report: axis 1 is out of bounds for array of dimension 1
-[INFO] saved checkpoint to results/moe_seed_123_full.pt and meta to results/moe_seed_123_full.meta.pkl
-[INFO] wrote retrain-on-full results to results/ablations_seed7_bestparams_all10/modality_amyloid_only/moe_seed_123.json

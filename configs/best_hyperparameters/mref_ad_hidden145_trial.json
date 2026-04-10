@@ -1,0 +1,19 @@
+{
+  "note": "Alternate mref-ad trial (hidden_exp=145, hidden_gate=91) for cross-eval vs mref_ad_best_trial.json",
+  "params": {
+    "lr": 0.0005347834525167017,
+    "wd": 0.0001329747917158593,
+    "hidden_exp": 145,
+    "hidden_gate": 91,
+    "drop": 0.2194172019108964,
+    "lambda_sparse": 0.17709145039691146,
+    "lambda_diverse": 0.0011483959367908012,
+    "tau": 0.615876537590035,
+    "tau_start": 1.1475878353453444,
+    "tau_decay": 0.9668313743718872,
+    "gate_noise": 0.09511066899487142,
+    "gumbel_hard": true,
+    "batch_size": 64,
+    "epochs": 14
+  }
+}

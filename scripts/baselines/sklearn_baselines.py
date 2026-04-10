@@ -1,6 +1,6 @@
 """Scikit-learn baselines.
 
-This module implements classical tabular baselines (LogReg / Linear SVM / RF / XGBoost if available)
+This module implements classical tabular baselines (LogReg / RF / XGBoost if available)
 behind a small, consistent interface so `scripts/train_baselines.py` can call them via the registry.
 
 Design goals:
@@ -11,8 +11,8 @@ Design goals:
 Notes
 -----
 * For multiclass AUC we typically need per-class probabilities.
-* Some models (e.g., LinearSVC) don't expose predict_proba; we fall back to decision_function
-  and softmax it to get pseudo-probabilities.
+* Use ``make_logistic_regression``, ``make_random_forest_classifier``, and ``make_xgb_classifier``
+  for tuning, refit, and ``analysis/evaluation/eval_*.py`` so constructors stay aligned.
 """
 
 from __future__ import annotations
@@ -23,14 +23,74 @@ from typing import Any, Dict, Optional, Tuple
 import numpy as np
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier
 
+# Canonical max_iter for project LogisticRegression (Optuna trials, refit, eval, runner).
+LOGISTIC_REGRESSION_MAX_ITER = 1000
 
-def _softmax(z: np.ndarray) -> np.ndarray:
-    z = z - np.max(z, axis=1, keepdims=True)
-    ez = np.exp(z)
-    return ez / np.sum(ez, axis=1, keepdims=True)
+
+def make_logistic_regression(
+    *, C: float, max_iter: Optional[int] = None, seed: int = 0
+) -> LogisticRegression:
+    """Project-standard `lbfgs` multinomial logistic regression (tuning, refit, eval, runner)."""
+    mi = LOGISTIC_REGRESSION_MAX_ITER if max_iter is None else max_iter
+    return LogisticRegression(C=C, max_iter=mi, solver="lbfgs", random_state=seed)
+
+
+def make_random_forest_classifier(
+    *,
+    n_estimators: int,
+    max_depth: Optional[int] = None,
+    min_samples_split: int = 2,
+    min_samples_leaf: int = 1,
+    n_jobs: int = -1,
+    seed: int = 42,
+) -> RandomForestClassifier:
+    """Project-standard ``RandomForestClassifier`` (Optuna, refit, eval, runner)."""
+    return RandomForestClassifier(
+        n_estimators=int(n_estimators),
+        max_depth=max_depth,
+        min_samples_split=int(min_samples_split),
+        min_samples_leaf=int(min_samples_leaf),
+        n_jobs=n_jobs,
+        random_state=seed,
+    )
+
+
+def make_xgb_classifier(
+    *,
+    n_estimators: int,
+    max_depth: int = 6,
+    learning_rate: float = 0.3,
+    subsample: float = 1.0,
+    colsample_bytree: float = 1.0,
+    tree_method: Optional[str] = None,
+    n_jobs: int = -1,
+    random_state: int = 42,
+    eval_metric: Optional[str] = None,
+):
+    """Project-standard ``XGBClassifier`` (multiclass). If ``tree_method`` is None, XGBoost library default is used."""
+    try:
+        import xgboost as xgb  # type: ignore
+    except Exception as e:
+        raise RuntimeError("xgboost is required for make_xgb_classifier") from e
+    kw: Dict[str, Any] = {
+        "n_estimators": int(n_estimators),
+        "max_depth": int(max_depth),
+        "learning_rate": float(learning_rate),
+        "subsample": float(subsample),
+        "colsample_bytree": float(colsample_bytree),
+        "use_label_encoder": False,
+        "verbosity": 0,
+        "objective": "multi:softprob",
+        "n_jobs": int(n_jobs),
+        "random_state": int(random_state),
+    }
+    if tree_method is not None:
+        kw["tree_method"] = str(tree_method)
+    if eval_metric is not None:
+        kw["eval_metric"] = eval_metric
+    return xgb.XGBClassifier(**kw)
 
 
 def _as_2d(x: np.ndarray) -> np.ndarray:
@@ -60,7 +120,14 @@ class SklearnRunner:
 
 
 class LogisticRegressionRunner(SklearnRunner):
-    def __init__(self, *, C: float = 1.0, max_iter: int = 2000, n_jobs: int = 1, seed: int = 0):
+    def __init__(
+        self,
+        *,
+        C: float = 1.0,
+        max_iter: int = LOGISTIC_REGRESSION_MAX_ITER,
+        n_jobs: int = 1,
+        seed: int = 0,
+    ):
         super().__init__("lr_all")
         self.C = C
         self.max_iter = max_iter
@@ -69,13 +136,7 @@ class LogisticRegressionRunner(SklearnRunner):
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> SklearnFitResult:
         X_train = _as_2d(X_train)
-        clf = LogisticRegression(
-            C=self.C,
-            max_iter=self.max_iter,
-            n_jobs=self.n_jobs,
-            solver="lbfgs",
-            random_state=self.seed,
-        )
+        clf = make_logistic_regression(C=self.C, max_iter=self.max_iter, seed=self.seed)
         clf.fit(X_train, y_train)
         return SklearnFitResult(self.model_name, clf)
 
@@ -84,35 +145,13 @@ class LogisticRegressionRunner(SklearnRunner):
         return fit.model.predict_proba(X)
 
 
-class LinearSVCRunner(SklearnRunner):
-    def __init__(self, *, C: float = 1.0, max_iter: int = 5000, seed: int = 0):
-        super().__init__("svm_all")
-        self.C = C
-        self.max_iter = max_iter
-        self.seed = seed
-
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> SklearnFitResult:
-        X_train = _as_2d(X_train)
-        clf = LinearSVC(C=self.C, max_iter=self.max_iter, random_state=self.seed)
-        clf.fit(X_train, y_train)
-        return SklearnFitResult(self.model_name, clf)
-
-    def predict_proba(self, fit: SklearnFitResult, X: np.ndarray) -> np.ndarray:
-        X = _as_2d(X)
-        # LinearSVC: use decision_function then softmax.
-        scores = fit.model.decision_function(X)
-        if scores.ndim == 1:
-            # binary: scores is (n,); convert to (n,2)
-            scores = np.stack([-scores, scores], axis=1)
-        return _softmax(scores)
-
-
 class RandomForestRunner(SklearnRunner):
     def __init__(
         self,
         *,
         n_estimators: int = 100,
         max_depth: Optional[int] = None,
+        min_samples_split: int = 2,
         min_samples_leaf: int = 1,
         n_jobs: int = 1,
         seed: int = 42,
@@ -120,18 +159,20 @@ class RandomForestRunner(SklearnRunner):
         super().__init__("rf_all")
         self.n_estimators = n_estimators
         self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.n_jobs = n_jobs
         self.seed = seed
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> SklearnFitResult:
         X_train = _as_2d(X_train)
-        clf = RandomForestClassifier(
+        clf = make_random_forest_classifier(
             n_estimators=self.n_estimators,
             max_depth=self.max_depth,
+            min_samples_split=self.min_samples_split,
             min_samples_leaf=self.min_samples_leaf,
             n_jobs=self.n_jobs,
-            random_state=self.seed,
+            seed=self.seed,
         )
         clf.fit(X_train, y_train)
         return SklearnFitResult(self.model_name, clf)
@@ -165,17 +206,18 @@ class XGBoostRunner(SklearnRunner):
     def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> SklearnFitResult:
         X_train = _as_2d(X_train)
         try:
-            from xgboost import XGBClassifier  # type: ignore
+            clf = make_xgb_classifier(
+                n_estimators=int(self.kw["n_estimators"]),
+                n_jobs=int(self.kw["n_jobs"]),
+                random_state=int(self.kw["random_state"]),
+                eval_metric="mlogloss",
+            )
         except Exception as e:
             raise RuntimeError(
                 "xgboost is not available but XGBoostRunner was requested. "
                 "Install xgboost or choose a different baseline."
             ) from e
 
-        clf = XGBClassifier(
-            eval_metric="mlogloss",
-            **self.kw,
-        )
         clf.fit(X_train, y_train)
         return SklearnFitResult(self.model_name, clf)
 
@@ -190,9 +232,6 @@ def build_sklearn_runner(name: str, *, seed: int = 0, n_jobs: int = 1) -> Sklear
 
     if name in {"lr_all", "logreg", "logistic", "logistic_regression"}:
         return LogisticRegressionRunner(seed=seed, n_jobs=n_jobs)
-
-    if name in {"svm_all", "linear_svm", "linearsvc"}:
-        return LinearSVCRunner(seed=seed)
 
     if name in {"rf_all", "random_forest", "rf"}:
         return RandomForestRunner(seed=seed, n_jobs=n_jobs)
@@ -218,7 +257,7 @@ def train_val_test(
     select_metric: str = "val_auc",
     skip_retrain: bool = False,
 ):
-    """Tune a sklearn baseline (rf_all/xgb_all/svm_all/lr_all), retrain on train+val and evaluate on test.
+    """Tune a sklearn baseline (rf_all/xgb_all/lr_all), retrain on train+val and evaluate on test.
 
     Returns dict with best_params, best_val_auc, test_metrics, model_path, meta_path, n_trials.
     """
@@ -242,7 +281,13 @@ def train_val_test(
         n_estimators = trial.suggest_int("n_estimators", 50, 500)
         max_depth = trial.suggest_int("max_depth", 3, 50)
         min_samples_split = trial.suggest_int("min_samples_split", 2, 10)
-        clf = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, min_samples_split=min_samples_split, n_jobs=-1, random_state=seed)
+        clf = make_random_forest_classifier(
+            n_estimators=n_estimators,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            n_jobs=-1,
+            seed=seed,
+        )
         clf.fit(Xtr, ytr)
         proba = clf.predict_proba(Xva)
         from utils import eval_multiclass_metrics
@@ -251,22 +296,17 @@ def train_val_test(
         return float(m.get(metric_key, float("nan")))
 
     def objective_xgb(trial):
-        params = {
-            'n_estimators': trial.suggest_int('n_estimators', 50, 500),
-            'max_depth': trial.suggest_int('max_depth', 3, 12),
-            'learning_rate': trial.suggest_float('learning_rate', 1e-3, 0.3, log=True),
-            'subsample': trial.suggest_float('subsample', 0.5, 1.0),
-            'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 1.0),
-            'use_label_encoder': False,
-            'verbosity': 0,
-            'objective': 'multi:softprob',
-            'random_state': seed,
-        }
-        clf = XGBoostRunner(n_estimators=params['n_estimators'], n_jobs=-1, seed=seed).fit(Xtr, ytr).model
-        # above returns fit result; but easier: use XGBoost XGBClassifier directly
         try:
-            import xgboost as xgb
-            clf = xgb.XGBClassifier(**params)
+            clf = make_xgb_classifier(
+                n_estimators=trial.suggest_int("n_estimators", 50, 500),
+                max_depth=trial.suggest_int("max_depth", 3, 12),
+                learning_rate=trial.suggest_float("learning_rate", 1e-3, 0.3, log=True),
+                subsample=trial.suggest_float("subsample", 0.5, 1.0),
+                colsample_bytree=trial.suggest_float("colsample_bytree", 0.5, 1.0),
+                tree_method=None,
+                n_jobs=-1,
+                random_state=seed,
+            )
             clf.fit(Xtr, ytr)
             proba = clf.predict_proba(Xva)
         except Exception:
@@ -276,38 +316,9 @@ def train_val_test(
         metric_key = select_metric[4:] if select_metric.startswith("val_") else select_metric
         return float(m.get(metric_key, float("nan")))
 
-    def objective_svm(trial):
-        from sklearn.svm import SVC
-        C = trial.suggest_float('C', 1e-3, 1e3, log=True)
-        kernel = trial.suggest_categorical('kernel', ['rbf', 'linear'])
-        if kernel == 'rbf':
-            gamma = trial.suggest_float('gamma', 1e-4, 1e-1, log=True)
-            # Use decision_function instead of probability=True to avoid costly
-            # Platt-scaling (probability=True) which fits an extra calibration step.
-            clf = SVC(C=C, kernel=kernel, gamma=gamma, probability=False)
-        else:
-            clf = SVC(C=C, kernel=kernel, probability=False)
-        clf.fit(Xtr, ytr)
-        # decision_function is much cheaper than predict_proba when probability=True
-        # and for multiclass it returns shape (n_samples, n_classes).
-        try:
-            scores = clf.decision_function(Xva)
-            if scores.ndim == 1:
-                # binary case -> convert to two-column scores
-                scores = np.stack([-scores, scores], axis=1)
-            proba = _softmax(scores)
-        except Exception:
-            # fallback to predict_proba if decision_function is unavailable
-            proba = clf.predict_proba(Xva)
-        from utils import eval_multiclass_metrics
-        m = eval_multiclass_metrics(yva, proba)
-        metric_key = select_metric[4:] if select_metric.startswith("val_") else select_metric
-        return float(m.get(metric_key, float("nan")))
-
     def objective_lr(trial):
-        from sklearn.linear_model import LogisticRegression
         C = trial.suggest_float('C', 1e-4, 1e2, log=True)
-        clf = LogisticRegression(C=C, max_iter=1000, multi_class='multinomial', solver='lbfgs')
+        clf = make_logistic_regression(C=C, seed=seed)
         clf.fit(Xtr, ytr)
         proba = clf.predict_proba(Xva)
         from utils import eval_multiclass_metrics
@@ -319,37 +330,33 @@ def train_val_test(
     if baseline.startswith('rf'):
         study.optimize(objective_rf, n_trials=n_trials, timeout=timeout)
         best = study.best_params
-        best_clf = RandomForestClassifier(n_estimators=best['n_estimators'], max_depth=best['max_depth'], min_samples_split=best['min_samples_split'], n_jobs=-1, random_state=seed)
+        best_clf = make_random_forest_classifier(
+            n_estimators=best["n_estimators"],
+            max_depth=best["max_depth"],
+            min_samples_split=best["min_samples_split"],
+            n_jobs=-1,
+            seed=seed,
+        )
     elif baseline.startswith('xgb'):
         study.optimize(objective_xgb, n_trials=n_trials, timeout=timeout)
         best = study.best_params
-        params = {
-            'n_estimators': best['n_estimators'],
-            'max_depth': best['max_depth'],
-            'learning_rate': best['learning_rate'],
-            'subsample': best['subsample'],
-            'colsample_bytree': best['colsample_bytree'],
-            'use_label_encoder': False,
-            'verbosity': 0,
-            'objective': 'multi:softprob',
-            'random_state': seed,
-        }
         try:
-            import xgboost as xgb
-            best_clf = xgb.XGBClassifier(**params)
+            best_clf = make_xgb_classifier(
+                n_estimators=best["n_estimators"],
+                max_depth=best["max_depth"],
+                learning_rate=best["learning_rate"],
+                subsample=best["subsample"],
+                colsample_bytree=best["colsample_bytree"],
+                tree_method=None,
+                n_jobs=-1,
+                random_state=seed,
+            )
         except Exception:
             best_clf = None
-    elif baseline.startswith('svm'):
-        study.optimize(objective_svm, n_trials=n_trials, timeout=timeout)
-        best = study.best_params
-        if best['kernel'] == 'rbf':
-            best_clf = SVC(C=best['C'], kernel='rbf', gamma=best['gamma'], probability=True)
-        else:
-            best_clf = SVC(C=best['C'], kernel='linear', probability=True)
     elif baseline.startswith('lr'):
         study.optimize(objective_lr, n_trials=n_trials, timeout=timeout)
         best = study.best_params
-        best_clf = LogisticRegression(C=best['C'], max_iter=1000, multi_class='multinomial', solver='lbfgs')
+        best_clf = make_logistic_regression(C=best['C'], seed=seed)
     else:
         raise ValueError(f"Unsupported sklearn baseline for tuning: {baseline_name}")
 
@@ -385,7 +392,7 @@ def train_val_test(
     # Retrain on TRAIN+VAL for final evaluation. We intentionally reuse the
     # selected estimator object and call fit() on the combined TRAIN+VAL set.
     # For the sklearn baselines used in this project (LogisticRegression,
-    # SVC, RandomForest with warm_start=False), calling fit() reinitializes
+    # RandomForest with warm_start=False), calling fit() reinitializes
     # learned state and produces an equivalent fresh fit, so cloning is not
     # necessary. Reusing the estimator keeps the code simple and consistent.
     X_all = np.vstack([Xtr, Xva])
@@ -431,31 +438,29 @@ def train_val_test(
             # Build classifier for second params following same logic as above
             second_clf = None
             if baseline.startswith('rf'):
-                second_clf = RandomForestClassifier(n_estimators=second_params.get('n_estimators', 100), max_depth=second_params.get('max_depth', None), min_samples_split=second_params.get('min_samples_split', 2), n_jobs=-1, random_state=seed)
+                second_clf = make_random_forest_classifier(
+                    n_estimators=second_params.get('n_estimators', 100),
+                    max_depth=second_params.get('max_depth', None),
+                    min_samples_split=second_params.get('min_samples_split', 2),
+                    n_jobs=-1,
+                    seed=seed,
+                )
             elif baseline.startswith('xgb'):
-                params2 = {
-                    'n_estimators': second_params.get('n_estimators', 100),
-                    'max_depth': second_params.get('max_depth', 3),
-                    'learning_rate': second_params.get('learning_rate', 0.01),
-                    'subsample': second_params.get('subsample', 1.0),
-                    'colsample_bytree': second_params.get('colsample_bytree', 1.0),
-                    'use_label_encoder': False,
-                    'verbosity': 0,
-                    'objective': 'multi:softprob',
-                    'random_state': seed,
-                }
                 try:
-                    import xgboost as xgb
-                    second_clf = xgb.XGBClassifier(**params2)
+                    second_clf = make_xgb_classifier(
+                        n_estimators=second_params.get('n_estimators', 100),
+                        max_depth=second_params.get('max_depth', 3),
+                        learning_rate=second_params.get('learning_rate', 0.01),
+                        subsample=second_params.get('subsample', 1.0),
+                        colsample_bytree=second_params.get('colsample_bytree', 1.0),
+                        tree_method=None,
+                        n_jobs=-1,
+                        random_state=seed,
+                    )
                 except Exception:
                     second_clf = None
-            elif baseline.startswith('svm'):
-                if second_params.get('kernel', 'rbf') == 'rbf':
-                    second_clf = SVC(C=second_params.get('C', 1.0), kernel='rbf', gamma=second_params.get('gamma', 1e-3), probability=True)
-                else:
-                    second_clf = SVC(C=second_params.get('C', 1.0), kernel='linear', probability=True)
             elif baseline.startswith('lr'):
-                second_clf = LogisticRegression(C=second_params.get('C', 1.0), max_iter=1000, multi_class='multinomial', solver='lbfgs')
+                second_clf = make_logistic_regression(C=second_params.get('C', 1.0), seed=seed)
 
             # Compute validation snapshot for second-best by fitting on TRAIN only
             if second_clf is not None:

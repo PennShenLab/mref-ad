@@ -47,7 +47,6 @@ _REGISTRY: Dict[str, Callable] = {
     # classical ML
     "rf": _sklearn_adapter("rf_all"),
     "xgb": _sklearn_adapter("xgb_all"),
-    "svm": _sklearn_adapter("svm_all"),
     "lr": _sklearn_adapter("lr_all"),
 
     # logistic/regression single/concat/latefusion

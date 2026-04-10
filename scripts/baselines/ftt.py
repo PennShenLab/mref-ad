@@ -44,7 +44,7 @@ class FTTConfig:
 # -----------------------------
 # Device
 # -----------------------------
-from .utils import get_default_device
+from .device_util import get_default_device
 
 
 def _class_weights(y: np.ndarray, n_classes: int, device: torch.device) -> torch.Tensor:

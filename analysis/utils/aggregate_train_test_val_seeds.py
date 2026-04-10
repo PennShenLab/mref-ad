@@ -30,7 +30,7 @@ def aggregate_seeds(seed_jsons: List[str], is_moe: bool = False) -> Dict[str, An
     Aggregate test_metrics across multiple seed JSONs.
     
     Input format (per seed):
-      - MoE (flat): {"test_auc": 0.79, "test_acc": 0.64, ...}
+      - mref-ad / train_moe (flat): {"test_auc": 0.79, "test_acc": 0.64, ...}
       - Baseline (nested): {"baseline_key": {"test_metrics": {"auc": 0.79, ...}}}
     
     Output format:
@@ -57,9 +57,9 @@ def aggregate_seeds(seed_jsons: List[str], is_moe: bool = False) -> Dict[str, An
     if not all_data:
         raise ValueError("No valid seed JSONs found")
     
-    # Handle MoE flat structure
+    # Handle mref-ad (train_moe) flat structure
     if is_moe:
-        print(f"[INFO] Processing MoE (flat structure)")
+        print(f"[INFO] Processing mref-ad flat JSON (train_moe output)")
         
         # Collect all test metrics
         metrics_per_seed = {}
@@ -176,8 +176,13 @@ def main():
                     help="Paths to seed JSON files (can use glob patterns)")
     ap.add_argument("--out", type=str, required=True,
                     help="Output aggregated JSON path")
-    ap.add_argument("--is_moe", action="store_true",
-                    help="Flag to indicate MoE flat structure (vs baseline nested structure)")
+    ap.add_argument(
+        "--is_moe",
+        "--is_mref_ad",
+        action="store_true",
+        dest="is_moe",
+        help="mref-ad (train_moe) flat per-seed JSON with top-level test_* keys (vs baseline nested structure).",
+    )
     args = ap.parse_args()
     
     # Expand globs

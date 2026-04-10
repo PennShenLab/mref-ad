@@ -274,7 +274,7 @@ def run_single_modality_LR(df, groups, mod, tr_idx, va_idx):
         return {"mod": mod, "val_auc": float("nan"), "proba": None}
 
     from sklearn.linear_model import LogisticRegression
-    clf = LogisticRegression(max_iter=1000, multi_class="auto", solver="lbfgs")
+    clf = LogisticRegression(max_iter=1000, solver="lbfgs")
     clf.fit(Xtr2, ytr2)
 
     proba = np.zeros((len(yva), 3), dtype=float)
@@ -294,7 +294,7 @@ def run_concat_LR(df, groups, tr_idx, va_idx):
     Xtr, Xva = median_impute_and_scale(Xtr, Xva)
 
     from sklearn.linear_model import LogisticRegression
-    clf = LogisticRegression(max_iter=300, multi_class="multinomial", solver="lbfgs")
+    clf = LogisticRegression(max_iter=300, solver="lbfgs")
     clf.fit(Xtr, ytr)
     proba = clf.predict_proba(Xva)
     m = eval_multiclass_metrics(yva, proba)

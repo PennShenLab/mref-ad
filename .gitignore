@@ -37,8 +37,15 @@ mlruns/
 *.db
 *.sqlite3
 
+# Vendored third-party repos (e.g. Flex-MoE, FastMoE — see scripts/baselines/FLEX_MOE_SETUP.md)
+third_party/
+scripts/third_party/
+
 # Data (not for public git; keep local paths in configs)
 data/
+
+# Patient-level train/val/test splits (PTIDs); generate locally (e.g. data_preprocessing/make_splits.py)
+configs/splits/*.json
 
 # Coverage / pytest
 .pytest_cache/

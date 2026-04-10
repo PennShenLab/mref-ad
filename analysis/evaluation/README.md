@@ -25,9 +25,9 @@ python analysis/evaluation/eval_xgb.py
 
 Default `--out-dir` values are `results/eval_rf`, `results/eval_lr`, `results/eval_mlp`, and `results/eval_xgb` (override as needed). Each run writes `summary.json` plus one JSON per split seed.
 
-## Hierarchical MoE (different format)
+## mref-ad (MoE; different JSON format)
 
-`run_optuna_best_seeds.sh` calls `scripts/mref-ad/train_moe.py` with **`results/optuna_moe_seed_<seed>.json`**-style files. The committed Optuna-style file **`configs/best_hyperparameters/mref_ad_best_trial.json`** uses a different schema (`params` / `value`); to use that with `train_moe.py` you would need a small adapter or export a compatible JSON—see the script comments in `run_optuna_best_seeds.sh`.
+`run_optuna_best_seeds.sh` calls **`scripts/mref-ad/train_moe.py`** with **`results/optuna_moe_seed_<seed>.json`**-style files. The committed file **`configs/best_hyperparameters/mref_ad_best_trial.json`** uses a different schema (`params` / `value`); use **`analysis/evaluation/run_seed7_bestparams_all10.sh`** (or adapt JSON) to feed that schema into `train_moe.py`—see comments in `run_optuna_best_seeds.sh`.
 
 ## Parity with `train_baselines.py` (train_val_test)
 

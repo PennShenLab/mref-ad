@@ -7,20 +7,19 @@ This project can use upstream Flex-MoE code from source.
 From repo root:
 
 ```bash
-conda activate ad-moe
-bash scripts/install_flex_moe.sh
+bash scripts/baselines/install_flex_moe.sh
 ```
 
 If FastMoE build is not needed yet:
 
 ```bash
-bash scripts/install_flex_moe.sh --skip-fastmoe
+bash scripts/baselines/install_flex_moe.sh --skip-fastmoe
 ```
 
 If you must use system Python (not recommended), use:
 
 ```bash
-bash scripts/install_flex_moe.sh --break-system-packages
+bash scripts/baselines/install_flex_moe.sh --break-system-packages
 ```
 
 What this does:
@@ -44,6 +43,6 @@ PY
 Flex-MoE upstream expects its own dataset layout and split format.  
 To run with this repo's 3-modality expert CSVs and 10 seeds (like the current baselines), we still need a small adapter that maps:
 - `configs/*experts_files.yaml` -> Flex-MoE modality tensors
-- `configs/splits_by_ptid_80_10_10_seed_*.json` -> train/val/test indices
+- `configs/splits/splits_by_ptid_80_10_10_seed_*.json` -> train/val/test indices
 
 This setup file only covers installation and import readiness.
