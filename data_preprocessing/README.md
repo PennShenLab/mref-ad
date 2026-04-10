@@ -36,7 +36,7 @@ Activate the project venv (see **`REPRODUCIBILITY.md`**: `source .venv/bin/activ
 | `explore_freesurfer_brain_regions.py` | `python data_preprocessing/explore_freesurfer_brain_regions.py` — needs `data/FS-VBM-keys_SLRedit.xlsx` or set **`MREF_FS_VBM_XLSX`** |
 | `map_freesurfer_brain_regions_to_data.py` | `python data_preprocessing/map_freesurfer_brain_regions_to_data.py --regions data/freesurfer_brain_regions.csv --data data/freesurfer_lastvisit/250826_DX_AMYLOID_last_visit.csv --output data/freesurfer_to_column_mapping.csv` |
 | `generate_freesurfer_experts_yaml.py` | `python data_preprocessing/generate_freesurfer_experts_yaml.py --mapping data/freesurfer_to_column_mapping.csv --output configs/freesurfer_experts.yaml` |
-| `make_splits.py` | `python data_preprocessing/make_splits.py --paths configs/paths.yaml --out configs/splits_by_ptid_80_10_10.json --seed 7` — requires **`utils.build_dataset`** (see below) |
+| `make_splits.py` | `python data_preprocessing/make_splits.py --paths configs/paths.yaml --out configs/splits/splits_by_ptid_80_10_10.json --seed 7` — requires **`utils.build_dataset`** (see below) |
 
 Each script’s module docstring has more detail and flags (e.g. `make_splits.py`: `--last_visit_only`, `--test_size`, `--val_size`).
 
@@ -45,7 +45,7 @@ Each script’s module docstring has more detail and flags (e.g. `make_splits.py
 Training and baselines read:
 
 - Expert file lists from **`configs/*.yaml`** (e.g. `freesurfer_lastvisit_experts_files.yaml`).
-- Fixed splits from **`configs/splits_by_ptid_80_10_10_seed_*.json`** (or your naming convention).
+- Fixed splits from **`configs/splits/splits_by_ptid_80_10_10_seed_*.json`** (or your naming convention).
 
 For environment setup and smoke tests, see **`REPRODUCIBILITY.md`** at the repo root.
 

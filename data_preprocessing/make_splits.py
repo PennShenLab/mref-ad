@@ -10,7 +10,7 @@ From repository root:
 
   python data_preprocessing/make_splits.py \\
     --paths configs/paths.yaml \\
-    --out configs/splits_by_ptid_80_10_10.json \\
+    --out configs/splits/splits_by_ptid_80_10_10.json \\
     --test_size 0.1 \\
     --val_size 0.1 \\
     --seed 7
@@ -21,7 +21,7 @@ Last visit per subject before splitting:
 
   python data_preprocessing/make_splits.py \\
     --paths configs/paths.yaml \\
-    --out configs/splits_by_ptid_80_10_10.json \\
+    --out configs/splits/splits_by_ptid_80_10_10.json \\
     --test_size 0.1 --val_size 0.1 \\
     --last_visit_only \\
     --seed 7
@@ -167,7 +167,11 @@ if __name__ == "__main__":
         description="Write stratified PTID train/val/test splits JSON (e.g. 80/10/10 per RNG seed)."
     )
     ap.add_argument("--paths", default="configs/paths.yaml")
-    ap.add_argument("--out", default="configs/splits_by_ptid.json")
+    ap.add_argument(
+        "--out",
+        default="configs/splits/splits_by_ptid.json",
+        help="Output JSON path. Parent directory (e.g. configs/splits/) is created if missing.",
+    )
     ap.add_argument("--test_size", type=float, default=0.1)
     ap.add_argument("--val_size", type=float, default=0.1)
     ap.add_argument(

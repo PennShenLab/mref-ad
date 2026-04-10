@@ -1,32 +1,34 @@
 #!/usr/bin/env python3
-"""Compute parameter counts for models used in this repo.
+"""Compute parameter counts for deep models in this repo (MLP, FT-Transformer, mref-ad MoE, Flex-MoE).
+
+Classical baselines (logistic regression, RF, XGBoost) are not supported here; use saved artifacts /
+sklearn introspection if you need those counts.
 
 Usage examples:
-  # Logistic Regression
-  python scripts/compute_model_params.py --model logreg --d_in 128 --n_classes 3 --out results/model_param_counts_logreg
-
-  # SVM
-  python scripts/compute_model_params.py --model svm --d_in 128 --n_classes 3 --out results/model_param_counts_svm
-
-  # XGBoost
-  python scripts/compute_model_params.py --model xgb --model-path results/models/xgb_all/xgb_concat_all/fold0/fold0.joblib --out results/model_param_counts_xgb_fold0
-
-  # Random Forest
-  python scripts/compute_model_params.py --model rf --model-path results/models/rf_all/rf_concat_all/fold0/fold0.joblib --out results/model_param_counts_rf_fold0
-
-  # MLP seed 7
-  python scripts/compute_model_params.py --model mlp --d_in 128 --hidden 507 --n_classes 3 
+  # MLP (example d_in for concat last-visit pipeline)
+  python analysis/model_complexity/compute_model_params.py --model mlp --d_in 282 --hidden 507 --n_classes 3 
 
   # FT-Transformer (requires rtdl_revisiting_models installed)
-  python scripts/compute_model_params.py --model ftt --d_num 128 --n_classes 3 --out results/model_param_counts_ftt
+  python analysis/model_complexity/compute_model_params.py --model ftt --d_num 282 --n_classes 3 --out results/model_param_counts_ftt
 
-  # MoE: provide a training meta.pkl produced by train_moe (contains 'groups') seed 1234
-  python scripts/compute_model_params.py --model moe --meta results/missingness/pet_missing/p1p00/folds/fold0/fold0.meta.pkl --hidden_exp 84 --hidden_gate 183 --n_classes 3
+  # mref-ad (MoE): use ``train_moe`` .meta.pkl **or** ``--experts_config`` (same YAML as training).
+  # ``--model mref_ad`` is an alias for ``moe``.
+  python analysis/model_complexity/compute_model_params.py --model mref_ad --experts_config configs/freesurfer_lastvisit_experts_files.yaml --hidden_exp 233 --hidden_gate 68 --drop 0.038 --gumbel_hard --gate_noise 0.01506 --n_classes 3
 
-  # seed 7
-  python scripts/compute_model_params.py --model moe --meta results/missingness/pet_missing/p1p00/folds/fold0/fold0.meta.pkl --hidden_exp 145 --hidden_gate 91 --n_classes 3
+  # mref-ad with checkpoint meta (replace ``--meta`` with your ``*.meta.pkl`` from ``scripts/mref-ad/train_moe.py``).
+  python analysis/model_complexity/compute_model_params.py --model moe --meta path/to/run.meta.pkl --hidden_exp 145 --hidden_gate 91 --n_classes 3
 
   # optionally add --topk 2 to compute when running with top-2 experts
+
+  # Flex-MoE: Flex-MoE checkout at ``--flex_moe_root`` and FastMoE (``fmoe``), e.g. ``bash scripts/baselines/install_flex_moe.sh``.
+  # From repo root (``utils`` / CSV paths). Optuna writes ``results/optuna_flex_moe_seed7_200_best_trial.json``; same schema as
+  # ``configs/best_hyperparameters/flex_moe_best_trial.json``. Launcher also: ``scripts/compute_model_params.py``.
+  python scripts/compute_model_params.py \
+    --model flex_moe \
+    --experts_config configs/freesurfer_lastvisit_experts_files.yaml \
+    --best_params_json configs/best_hyperparameters/flex_moe_best_trial.json \
+    --n_classes 3 \
+    --flex_moe_root third_party/flex-moe
 
 
 The script prints total and trainable parameter counts and a breakdown per-module.
@@ -45,9 +47,12 @@ import torch
 # ensure repository root is on sys.path so imports like `baselines.*` work when
 # running the script directly from `scripts/` or the repo root.
 import os
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
+_scripts_dir = os.path.join(_REPO_ROOT, "scripts")
+if _scripts_dir not in sys.path:
+    sys.path.insert(0, _scripts_dir)
 
 
 def count_params(model: torch.nn.Module):
@@ -66,7 +71,7 @@ def breakdown_params(model: torch.nn.Module):
 
 def count_active_params_moe(model, topk=None):
     """
-    Calculate active parameters for MoE models.
+    Calculate active parameters for mref-ad MoE models.
     
     For MoE with topk experts:
     - Gate always active (all gate params)
@@ -367,29 +372,53 @@ def build_ftt(args):
     return model
 
 
+def _load_mref_train_moe():
+    """Load mref-ad's ``MoE`` / ``HierarchicalMoE`` from ``scripts/mref-ad/train_moe.py`` (not importable as a package)."""
+    import importlib.util
+
+    path = os.path.join(_REPO_ROOT, "scripts", "mref-ad", "train_moe.py")
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"Expected train_moe at {path}")
+    spec = importlib.util.spec_from_file_location("_mref_train_moe", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Could not load module spec for {path}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def build_moe(args):
-    # Try to obtain groups/dims from meta.pkl
-    if args.meta is None:
-        raise ValueError("--meta is required for moe to read saved groups mapping")
-    with open(args.meta, "rb") as f:
-        meta = pickle.load(f)
-    groups = meta.get("groups", None)
-    if groups is None:
-        raise ValueError(f"meta file {args.meta} does not contain 'groups' mapping")
+    groups = None
+    if getattr(args, "meta", None):
+        with open(args.meta, "rb") as f:
+            meta = pickle.load(f)
+        groups = meta.get("groups", None)
+        if groups is None:
+            raise ValueError(f"meta file {args.meta} does not contain 'groups' mapping")
+    elif getattr(args, "experts_config", None):
+        import utils
+
+        _, groups, _ = utils.load_experts_from_yaml(args.experts_config)
+    else:
+        raise ValueError(
+            "For --model moe/mref_ad, pass --meta (train_moe .meta.pkl) or --experts_config (YAML used for training)."
+        )
+
     dims = [len(v) for v in groups.values()]
-
-    # import MoE class
-    try:
-        # prefer the canonical train_moe implementation
-        from scripts.train_moe import MoE
-    except Exception:
-        try:
-            from scripts.train_moe_experts import MoE
-        except Exception:
-            raise
-
-    model = MoE(dims, hidden_exp=args.hidden_exp, hidden_gate=args.hidden_gate, n_classes=args.n_classes, drop=args.drop, gate_type=args.gate_type, gumbel_hard=args.gumbel_hard, gate_noise=args.gate_noise, topk=args.topk)
-    return model
+    mod = _load_mref_train_moe()
+    kw = dict(
+        hidden_exp=args.hidden_exp,
+        hidden_gate=args.hidden_gate,
+        n_classes=args.n_classes,
+        drop=args.drop,
+        gate_type=args.gate_type,
+        gumbel_hard=args.gumbel_hard,
+        gate_noise=args.gate_noise,
+        topk=args.topk,
+    )
+    if getattr(args, "use_hierarchical_gate", False):
+        return mod.HierarchicalMoE(groups, **kw)
+    return mod.MoE(dims, **kw)
 
 
 def _flex_modality_groups(groups, selected_letters: str):
@@ -447,21 +476,29 @@ def build_flex_moe(args):
     if args.experts_config is None:
         raise ValueError("--experts_config is required for flex_moe")
 
-    # train_flex_moe expects "utils" to resolve to scripts/utils.py
-    script_dir = os.path.join(_REPO_ROOT, "scripts")
-    if script_dir not in sys.path:
-        sys.path.insert(0, script_dir)
-    import utils  # type: ignore
+    flex_root = os.path.abspath(args.flex_moe_root)
+    if not os.path.isdir(flex_root):
+        raise FileNotFoundError(
+            f"--flex_moe_root is not a directory: {flex_root}. "
+            "Install Flex-MoE (see scripts/baselines/FLEX_MOE_SETUP.md; bash scripts/baselines/install_flex_moe.sh) or pass a valid path."
+        )
+
+    import utils  # type: ignore  # repo-root utils.py
 
     df, groups, _ = utils.load_experts_from_yaml(args.experts_config)
     mod_cols = _flex_modality_groups(groups, args.modality)
     mod_keys = list(mod_cols.keys())
     num_modalities = len(mod_keys)
 
-    flex_root = os.path.abspath(args.flex_moe_root)
     if flex_root not in sys.path:
         sys.path.insert(0, flex_root)
-    from models import FlexMoE, PatchEmbeddings  # type: ignore
+    try:
+        from models import FlexMoE, PatchEmbeddings  # type: ignore
+    except ModuleNotFoundError as e:
+        raise ModuleNotFoundError(
+            f"{e}. Flex-MoE imports ``fmoe`` (FastMoE). Build/install per "
+            "scripts/baselines/FLEX_MOE_SETUP.md (e.g. bash scripts/baselines/install_flex_moe.sh)."
+        ) from e
 
     encoder_dict = torch.nn.ModuleDict({
         m: PatchEmbeddings(len([c for c in mod_cols[m] if c in df.columns]), int(args.num_patches), int(args.hidden_dim))
@@ -534,205 +571,13 @@ def count_active_params_flex_moe(model, topk):
     return int(active_params), breakdown
 
 
-# -----------------------------
-# Classical / tree-based counting helpers
-# -----------------------------
-def _load_joblib(path: str):
-    try:
-        import joblib
-    except Exception:
-        raise RuntimeError("joblib is required to load sklearn models; pip install joblib")
-    return joblib.load(path)
-
-
-def _unwrap_model(obj):
-    """If the loaded object is a wrapper (SklearnFitResult) or has a .model
-    attribute, return the inner model; otherwise return the object itself.
-    """
-    if obj is None:
-        return None
-    # common wrapper in this repo: SklearnFitResult with .model attribute
-    if hasattr(obj, "model"):
-        return getattr(obj, "model")
-    return obj
-
-
-def count_logreg(args):
-    # If a saved model is provided, load and count coef_/intercept_. Otherwise fall back to shape-based count
-    if args.model_path:
-        m = _load_joblib(args.model_path)
-        m = _unwrap_model(m)
-        coef = getattr(m, "coef_", None)
-        intercept = getattr(m, "intercept_", None)
-        total = int((coef.size if coef is not None else 0) + (intercept.size if intercept is not None else 0))
-        breakdown = {"coef": {"total": int(coef.size) if coef is not None else 0, "trainable": int(coef.size) if coef is not None else 0}}
-        if intercept is not None:
-            breakdown["intercept"] = {"total": int(intercept.size), "trainable": int(intercept.size)}
-        return total, total, breakdown
-    else:
-        # require d_in and n_classes
-        d = args.d_in
-        K = args.n_classes
-        total = K * d + K
-        breakdown = {"coef": {"total": K * d, "trainable": K * d}, "intercept": {"total": K, "trainable": K}}
-        return total, total, breakdown
-
-
-def count_svm(args):
-    if args.model_path:
-        m = _load_joblib(args.model_path)
-        m = _unwrap_model(m)
-        sv = getattr(m, "support_vectors_", None)
-        dual = getattr(m, "dual_coef_", None)
-        intercept = getattr(m, "intercept_", None)
-        if sv is not None:
-            total = int((sv.size if sv is not None else 0) + (dual.size if dual is not None else 0) + (intercept.size if intercept is not None else 0))
-            breakdown = {
-                "support_vectors": {"total": int(sv.size), "trainable": int(sv.size)},
-                "dual_coef": {"total": int(dual.size) if dual is not None else 0, "trainable": int(dual.size) if dual is not None else 0},
-            }
-            if intercept is not None:
-                breakdown["intercept"] = {"total": int(intercept.size), "trainable": int(intercept.size)}
-            return total, total, breakdown
-        else:
-            coef = getattr(m, "coef_", None)
-            intercept = getattr(m, "intercept_", None)
-            total = int((coef.size if coef is not None else 0) + (intercept.size if intercept is not None else 0))
-            breakdown = {"coef": {"total": int(coef.size) if coef is not None else 0, "trainable": int(coef.size) if coef is not None else 0}}
-            if intercept is not None:
-                breakdown["intercept"] = {"total": int(intercept.size), "trainable": int(intercept.size)}
-            return total, total, breakdown
-    else:
-        # require d_in and n_classes: assume linear SVM
-        d = args.d_in
-        K = args.n_classes
-        total = K * d + K
-        breakdown = {"coef": {"total": K * d, "trainable": K * d}, "intercept": {"total": K, "trainable": K}}
-        return total, total, breakdown
-
-
-def count_rf(args):
-    if not args.model_path:
-        raise ValueError("--model-path is required for RandomForest counting (provide a saved joblib RandomForestClassifier)")
-    m = _load_joblib(args.model_path)
-    m = _unwrap_model(m)
-    # sklearn RandomForest stores trees in estimators_
-    total_nodes = sum(getattr(est.tree_, "node_count", 0) for est in getattr(m, "estimators_", []))
-    # approximate stored elements per tree: children_left, children_right, feature, threshold arrays + value
-    approx_elements = 0
-    for est in getattr(m, "estimators_", []):
-        node_count = getattr(est.tree_, "node_count", 0)
-        value_arr = getattr(est.tree_, "value", None)
-        value_size = int(value_arr.size) if (value_arr is not None and hasattr(value_arr, "size")) else 0
-        approx_elements += node_count * 4 + value_size
-    total = int(approx_elements)
-
-    # compute leaf-based learned-parameter count: count leaves across all trees
-    n_leaves = 0
-    output_dim = 1
-    for est in getattr(m, "estimators_", []):
-        tree = getattr(est, "tree_", None)
-        if tree is None:
-            continue
-        children_left = getattr(tree, "children_left", None)
-        if children_left is not None:
-            n_leaves += int((children_left == -1).sum())
-        # try to infer output dim from tree_.value shape
-        value = getattr(tree, "value", None)
-        if value is not None and hasattr(value, "shape"):
-            try:
-                output_dim = int(value.shape[-1])
-            except Exception:
-                output_dim = output_dim
-
-    learned_leaf_weights = int(n_leaves * output_dim)
-
-    breakdown = {
-        "n_trees": {"total": len(m.estimators_), "trainable": 0},
-        "total_nodes": {"total": int(total_nodes), "trainable": 0},
-        "approx_elements": {"total": int(approx_elements), "trainable": 0},
-        "n_leaves": {"total": int(n_leaves), "trainable": 0},
-        "learned_leaf_weights": {"total": int(learned_leaf_weights), "trainable": 0},
-    }
-    return total, 0, breakdown
-
-
-def count_xgb(args):
-    if not args.model_path:
-        raise ValueError("--model-path is required for XGBoost counting (provide a saved xgb model)")
-    try:
-        import xgboost as xgb
-    except Exception:
-        raise RuntimeError("xgboost is required to load XGBoost models; pip install xgboost")
-    # try Booster load
-    try:
-        bst = xgb.Booster()
-        bst.load_model(args.model_path)
-        # prefer structured dataframe if available
-        try:
-            df = bst.trees_to_dataframe()
-            n_trees = int(df['Tree'].nunique())
-            n_leaves = int((df['Feature'] == 'Leaf').sum()) if 'Feature' in df.columns else int((df['Node'] == 'Leaf').sum())
-        except Exception:
-            dumps = bst.get_dump()
-            n_trees = len(dumps)
-            # approximate nodes by counting lines
-            total_nodes = sum(s.count('\n') + 1 for s in dumps)
-            # try to estimate leaves by counting lines containing 'leaf'
-            import re
-            n_leaves = 0
-            for s in dumps:
-                for line in s.splitlines():
-                    if re.search(r"leaf", line, flags=re.IGNORECASE):
-                        n_leaves += 1
-
-        # try to infer output dim: prefer sklearn wrapper n_classes_ if available (not for raw Booster)
-        output_dim = 1
-        # total nodes approximation
-        total_nodes = None
-        try:
-            dumps = bst.get_dump()
-            total_nodes = sum(s.count('\n') + 1 for s in dumps)
-        except Exception:
-            total_nodes = None
-
-        learned_leaf_weights = int(n_leaves * output_dim)
-        total = int(total_nodes) if total_nodes is not None else int(n_leaves)
-        breakdown = {
-            "n_trees": {"total": n_trees, "trainable": 0},
-            "approx_nodes": {"total": int(total_nodes) if total_nodes is not None else int(n_leaves), "trainable": 0},
-            "n_leaves": {"total": int(n_leaves), "trainable": 0},
-            "learned_leaf_weights": {"total": int(learned_leaf_weights), "trainable": 0},
-        }
-        return total, 0, breakdown
-    except Exception:
-        # maybe sklearn API object saved
-        m = _load_joblib(args.model_path)
-        m = _unwrap_model(m)
-        try:
-            bst = m.get_booster()
-            df = bst.trees_to_dataframe()
-            total_nodes = len(df)
-            n_trees = int(df['Tree'].nunique())
-            n_leaves = int((df['Feature'] == 'Leaf').sum()) if 'Feature' in df.columns else 0
-            # try to infer output dim from sklearn wrapper
-            output_dim = getattr(m, 'n_classes_', 1)
-            learned_leaf_weights = int(n_leaves * output_dim)
-            breakdown = {
-                "n_trees": {"total": n_trees, "trainable": 0},
-                "approx_nodes": {"total": int(total_nodes), "trainable": 0},
-                "n_leaves": {"total": int(n_leaves), "trainable": 0},
-                "learned_leaf_weights": {"total": int(learned_leaf_weights), "trainable": 0},
-            }
-            total = int(total_nodes)
-            return total, 0, breakdown
-        except Exception:
-            raise RuntimeError("Failed to inspect xgboost model; ensure you provided a Booster-compatible model file or sklearn API XGBClassifier")
-
-
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", choices=["mlp", "ftt", "moe", "flex_moe", "logreg", "svm", "rf", "xgb"], required=True)
+    ap.add_argument(
+        "--model",
+        choices=["mlp", "ftt", "moe", "mref_ad", "flex_moe"],
+        required=True,
+    )
     # mlp args
     ap.add_argument("--d_in", type=int, default=128)
     ap.add_argument("--hidden", type=int, default=256)
@@ -741,19 +586,32 @@ def main():
     # ftt args
     ap.add_argument("--d_num", type=int, default=128)
     ap.add_argument("--out", type=str, default="results/model_param_counts", help="Output file prefix (without extension)")
-    # model file for scikit-learn / xgboost artifacts
-    ap.add_argument("--model-path", type=str, default=None, help="Path to a saved model file (joblib for sklearn, xgb model for xgboost)")
     # moe args
-    ap.add_argument("--meta", type=str, default=None, help="Path to .meta.pkl produced by train_moe (contains 'groups')")
+    ap.add_argument(
+        "--meta",
+        type=str,
+        default=None,
+        help="Path to .meta.pkl from mref-ad training (scripts/mref-ad/train_moe.py). Contains 'groups'. Omit if using --experts_config.",
+    )
     ap.add_argument("--hidden_exp", type=int, default=128)
     ap.add_argument("--hidden_gate", type=int, default=128)
     ap.add_argument("--gate_type", type=str, default="softmax")
     ap.add_argument("--gumbel_hard", action="store_true")
     ap.add_argument("--gate_noise", type=float, default=0.02)
     ap.add_argument("--topk", type=int, default=None)
+    ap.add_argument(
+        "--use_hierarchical_gate",
+        action="store_true",
+        help="For mref-ad (moe/mref_ad): build HierarchicalMoE (same as train_moe --use_hierarchical_gate).",
+    )
     # flex-moe args
     ap.add_argument("--best_params_json", type=str, default=None, help="Path to Optuna best-trial JSON with 'best_params' for Flex-MoE")
-    ap.add_argument("--experts_config", type=str, default=None, help="YAML mapping expert_name -> CSV path (required for flex_moe)")
+    ap.add_argument(
+        "--experts_config",
+        type=str,
+        default=None,
+        help="YAML expert_name -> CSV path (required for flex_moe; optional for mref-ad moe/mref_ad if --meta is omitted).",
+    )
     ap.add_argument("--flex_moe_root", type=str, default="third_party/flex-moe")
     ap.add_argument("--modality", type=str, default="AMD")
     ap.add_argument("--hidden_dim", type=int, default=64)
@@ -766,6 +624,8 @@ def main():
     ap.add_argument("--num_heads", type=int, default=4)
 
     args = ap.parse_args()
+    if args.model == "mref_ad":
+        args.model = "moe"
 
     # handle deep models that return torch.nn.Module
     if args.model in ("mlp", "ftt", "moe", "flex_moe"):
@@ -810,11 +670,13 @@ def main():
         elif args.model == "ftt":
             # Calculate FLOPs for FT-Transformer
             total_flops, flops_breakdown = count_flops_ftt(model, batch_size=1)
-            
+            # Dense model: every forward uses all trainable weights (unlike MoE top-k).
             results = {
                 "model": args.model,
                 "total_params": int(total),
                 "trainable_params": int(trainable),
+                "active_params": int(trainable),
+                "active_params_note": "dense: all trainable parameters participate in each forward",
                 "total_flops": int(total_flops),
                 "flops_breakdown": flops_breakdown,
                 "args": vars(args),
@@ -822,11 +684,12 @@ def main():
         elif args.model == "mlp":
             # Calculate FLOPs for MLP
             total_flops = count_flops_mlp(model)
-            
             results = {
                 "model": args.model,
                 "total_params": int(total),
                 "trainable_params": int(trainable),
+                "active_params": int(trainable),
+                "active_params_note": "dense: all trainable parameters participate in each forward",
                 "total_flops": int(total_flops),
                 "args": vars(args),
             }
@@ -838,91 +701,47 @@ def main():
                 "args": vars(args),
             }
 
-    # classical / tree-based models: compute counts from saved artifacts or shapes
-    elif args.model == "logreg":
-        total, trainable, breakdown = count_logreg(args)
-        results = {
-            "model": args.model,
-            "total_params": int(total),
-            "trainable_params": int(trainable),
-            "args": vars(args),
-        }
-    elif args.model == "svm":
-        total, trainable, breakdown = count_svm(args)
-        results = {
-            "model": args.model,
-            "total_params": int(total),
-            "trainable_params": int(trainable),
-            "args": vars(args),
-        }
-    elif args.model == "rf":
-        total, trainable, breakdown = count_rf(args)
-        results = {
-            "model": args.model,
-            "total_params": int(total),
-            "trainable_params": int(trainable),
-            "args": vars(args),
-        }
-    elif args.model == "xgb":
-        total, trainable, breakdown = count_xgb(args)
-        results = {
-            "model": args.model,
-            "total_params": int(total),
-            "trainable_params": int(trainable),
-            "args": vars(args),
-        }
     else:
         raise SystemExit("unknown model")
-    # Build results: use a single consistent metric for total_params.
-    # For tree ensembles we prefer the learned-parameter equivalent (leaf-based).
-    
-    # If the breakdown supplies a leaf-based learned parameter count, use that
-    # as the canonical total_params (this provides an apples-to-apples metric
-    # comparable to NN parameter counts).
-    if isinstance(breakdown, dict) and "learned_leaf_weights" in breakdown:
-        try:
-            learned = int(breakdown["learned_leaf_weights"]["total"])
-            results["total_params"] = learned
-            results["trainable_params"] = 0
-        except Exception:
-            pass
 
     print(f"Model: {args.model}")
     print(f"Total params: {results['total_params']:,}")
     print(f"Trainable params: {results['trainable_params']:,}")
-    
-    # Print FLOPs for models that support it
-    if "total_flops" in results and args.model not in ["moe"]:
-        print(f"Total FLOPs: {results['total_flops']:,}")
-        
-        # Print detailed breakdown if available
-        if "flops_breakdown" in results:
-            print(f"\nFLOPs Breakdown:")
-            for k, v in results['flops_breakdown'].items():
-                if isinstance(v, (int, float)):
-                    print(f"  {k:30s}: {v:,}" if isinstance(v, int) else f"  {k:30s}: {v}")
-                else:
-                    print(f"  {k:30s}: {v}")
-    
-    # Print active params and FLOPs for MoE
-    if args.model in ("moe", "flex_moe") and "active_params" in results:
-        print(f"Active params: {results['active_params']:,}")
+
+    # Active params: MoE / flex_moe (sparse routing) or dense models (ftt, mlp: equals trainable)
+    if "active_params" in results:
+        note = results.get("active_params_note", "")
+        suffix = f"  # {note}" if note else ""
+        print(f"Active params: {results['active_params']:,}{suffix}")
         if "active_flops" in results:
             print(f"Active FLOPs: {results['active_flops']:,}")
-        print(f"\nActive Parameters Breakdown:")
-        for k, v in results['active_params_breakdown'].items():
-            if isinstance(v, (int, float)):
-                print(f"  {k:30s}: {v:,}" if isinstance(v, int) else f"  {k:30s}: {v}")
-            else:
-                print(f"  {k:30s}: {v}")
-        if "flops_breakdown" in results:
-            print(f"\nFLOPs Breakdown:")
-            for k, v in results['flops_breakdown'].items():
+        if args.model in ("moe", "flex_moe") and "active_params_breakdown" in results:
+            print("\nActive Parameters Breakdown:")
+            for k, v in results["active_params_breakdown"].items():
                 if isinstance(v, (int, float)):
                     print(f"  {k:30s}: {v:,}" if isinstance(v, int) else f"  {k:30s}: {v}")
                 else:
                     print(f"  {k:30s}: {v}")
-    
+        if args.model == "moe" and "flops_breakdown" in results:
+            print("\nFLOPs Breakdown:")
+            for k, v in results["flops_breakdown"].items():
+                if isinstance(v, (int, float)):
+                    print(f"  {k:30s}: {v:,}" if isinstance(v, int) else f"  {k:30s}: {v}")
+                else:
+                    print(f"  {k:30s}: {v}")
+
+    # Print FLOPs for models that support it (MoE prints FLOPs above; skip duplicate)
+    if "total_flops" in results and args.model not in ["moe"]:
+        print(f"Total FLOPs: {results['total_flops']:,}")
+
+        if "flops_breakdown" in results:
+            print(f"\nFLOPs Breakdown:")
+            for k, v in results["flops_breakdown"].items():
+                if isinstance(v, (int, float)):
+                    print(f"  {k:30s}: {v:,}" if isinstance(v, int) else f"  {k:30s}: {v}")
+                else:
+                    print(f"  {k:30s}: {v}")
+
     print("\nModule breakdown (top-level children):")
     # normalize breakdown entries: accept either (total, trainable) tuples or
     # {'total':..., 'trainable':...} dicts (the code handles both wrappers and raw estimators)
