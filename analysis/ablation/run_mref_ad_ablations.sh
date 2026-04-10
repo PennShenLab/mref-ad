@@ -22,7 +22,7 @@ SEEDS=(7 13 42 1234 2027 99 123 555 999 1337)
 SPLITS_PATTERN="configs/splits/splits_by_ptid_80_10_10_seed_{seed}.json"
 PARAMS_JSON="${PARAMS_JSON:-configs/best_hyperparameters/mref_ad_best_trial.json}"
 FULL_EXPERTS_CONFIG="configs/freesurfer_lastvisit_experts_files.yaml"
-OUT_ROOT="${OUT_ROOT:-results/ablations_moe}"
+OUT_ROOT="${OUT_ROOT:-results/ablations_mref_ad}"
 
 RUN_AGGREGATION=true
 
@@ -84,9 +84,9 @@ run_ablation_loop() {
 
   for seed in "${SEEDS[@]}"; do
     local splits_file="${SPLITS_PATTERN//\{seed\}/${seed}}"
-    local out_json="${out_dir}/moe_seed_${seed}.json"
-    local ckpt="${out_dir}/moe_seed_${seed}.pt"
-    local log_file="${out_dir}/moe_seed_${seed}.log"
+    local out_json="${out_dir}/mref_ad_seed_${seed}.json"
+    local ckpt="${out_dir}/mref_ad_seed_${seed}.pt"
+    local log_file="${out_dir}/mref_ad_seed_${seed}.log"
 
     if [[ ! -f "${splits_file}" ]]; then
       echo "[ERROR] Missing splits: ${splits_file}"
@@ -159,13 +159,13 @@ if [[ "${RUN_AGGREGATION}" == "true" ]]; then
     local d="${OUT_ROOT}/${name}"
     [[ -d "${d}" ]] || return
     local n
-    n=$(find "${d}" -maxdepth 1 -name 'moe_seed_*.json' 2>/dev/null | wc -l)
+    n=$(find "${d}" -maxdepth 1 -name 'mref_ad_seed_*.json' 2>/dev/null | wc -l)
     [[ "${n}" -gt 0 ]] || return
-    python3 scripts/aggregate_train_test_val_seeds.py \
-      --seed_jsons "${d}"/moe_seed_*.json \
-      --out "${d}/moe_aggregated.json" \
+    python3 analysis/utils/aggregate_train_test_val_seeds.py \
+      --seed_jsons "${d}"/mref_ad_seed_*.json \
+      --out "${d}/mref_ad_aggregated.json" \
       --is_moe
-    echo "  -> ${d}/moe_aggregated.json"
+    echo "  -> ${d}/mref_ad_aggregated.json"
   }
 
   if [[ "${RUN_MODALITY_ABLATION}" == "true" ]]; then
